@@ -1,0 +1,149 @@
+---
+title: "ASSESSING THE CORRELATES OF SELF REPORTED HEALTH AMONG THE CANADIAN RESIDENTS"
+author: "Name"
+date: "Due Date"
+output:
+  html_document:
+    df_print: paged
+  word_document: default
+  pdf_document: default
+---
+
+```{r, include=FALSE}
+options(tinytex.verbose = TRUE)
+library(rmarkdown)
+library(tidyverse)
+library(tinytex)
+
+`````
+
+
+## ASSESSING THE CORRELATES OF SELF REPORTED HEALTH AMONG THE CANADIAN RESIDENTS
+
+# Name(s) of Author(s) 
+# Date
+
+## Abstract
+
+The study used the Gss data set whose target population for 2017 survey is all non-institutionalized persons 15 years of age or older, living in the 10 provinces of Canada. The analysis presents distribution of individuals in terms demographic variables such as gender, age, education, occupation, place of birth, marital status as well as their opinions on their perceived state of health and mental health.  The main focus of the study was to assess the distribution of the respondents' demographic variables and finally to assess the factors the influence ones' feeling of health.  The descriptive statistics, frequency tabulation as well as the ordinal logistic regression model were used to derive the findings of the study. The following derivations may be made from the results of the regression model; Higher income individuals reported higher overall feeling of health. The association between income and higher health index may be explained by the fact that as income increases, one may have access to better medical coverage i.e through an insurance policy or otherwise. The individual may also afford specialized treatment and care, there is also a sense of security that may be associated with high incomes.  The marital status, "Living common-law"  is associated with a decreases the expected value of self reported health in log odds by 1.497. The married individuals are highly likely to report a better rating for self reported health.This may be attributed to the emotional and physical support that one may derive for a partner.  Those individuals in occupational health, natural and applied sciences, management, art and culture, education manufacturing and utilities as well as service occupation are likely to reporting lowering ratings of self reported health. On the flip-side, those in agriculture and related production, and transport and equipment operators are likely to report higher health index. It is not apparent why some occupations are associated with better self reported health while others are not. Long hours of work are associated with lower ratings of self reported health.  The odds of feeling less healthy are even more among those who work for over 50 hours per week. Higher family income is found to be a predictor for a higher rating of self-reported health.  individuals that live with partners are on average likely to report higher rating of self reported health with increase in odds of up to 1.11 times.  Even though the current marriage variable had a positive influence on self reported health in both the two levels, it was noted that individuals who reported that current marriage is first have higher odds of reporting better feeling of self reported health.
+
+
+## Introduction 
+The study uses the GSS 2017 data set to anlayse the demographic variables and self reported perception of overall health. The primary objectives of General Social Survey (GSS) are provision of information on specific social policy issues of emerging interests and  gathering information related to social trends which enables monitoring changes in the living conditions and overall well-being of Canadians over time.  The  utility of the collected information lies greatly with  program and policy areas such as childcare strategies, parental benefits, child custody and spousal support programs as well means-tested allocations. The data analysis procedure involves both exploratory and inferential statistics. The first part presents the summary statistics through various measures of spread and central tendencies and also frequency tabulation through cross tabs. The inferential statistics applies the use of chi-square tests and the ordinal logistic regression model to assess the association between the GSS data set variables.  The data set is considered appropriate for the study since it has the appropriate sample size of over 20,000 observations which are relevant to the research objectives.  The research question were as follows;  Is the education level of individuals associated with their citizenship type?
+ what are the variables influence individuals' feeling of self reported health?
+ 
+# Data
+
+The data set is a General Social Survey data- related to  Canadian families. The variables in the data includes information related to  family origins, conjugal and parental history (chronology of marriages, common-law unions and children), children's home leaving, and other socioeconomic characteristics.
+The study targeted the population of all non-institutionalized persons 15 years of age or older, residing in the 10 provinces of Canada.
+The data was collected using a survey developed and  administered questionnaire based on research and extensive liaison with key partners and data users. A pilot study study was carried out with respondents in two cities, selected in based on representative criteria. From the pilot, the  Questions  were fashioned in a manner that would ensure collecting important information required for the study with utmost efficiency.  The sampling followed a cross-sectional design. The  utility of the collected information lies greatly with  program and policy areas such as childcare strategies, parental benefits, child custody and spousal support programs as well means-tested allocations. The data set had over 20,000 observations which makes it appropriates for use in deriving some generalizations about the population. The study based on the GSS survey data is generalizable to the target population if the  non-response bias is ignored.
+
+```{r}
+gss=read.csv("D:\\Downloads\\gss.csv")
+head(gss)
+````
+#Exploratory Data Analysis
+````{r}
+library(epiDisplay)
+tab1(gss$place_birth_canada, sort.group = "decreasing", cum.percent = TRUE,main = "Distribution of place of birth")
+tab1(gss$place_birth_province, sort.group = "decreasing", cum.percent = TRUE,main = "Distribution of place_birth_province")
+
+tab1(gss$pop_center, sort.group = "decreasing", cum.percent = TRUE,main = "Distribution of pop_center")
+
+
+tab1(gss$marital_status, sort.group = "decreasing", cum.percent = TRUE,main = "Distribution of marital status")
+
+tab1(gss$own_rent, sort.group = "decreasing", cum.percent = TRUE,main = "Distribution of residence status")
+
+tab1(gss$living_arrangement, sort.group = "decreasing", cum.percent = TRUE,main = "Distribution ofliving_arrangement")
+
+
+tab1(gss$hh_type, sort.group = "decreasing", cum.percent = TRUE,main = "Distribution of house type")
+
+````
+##Descriptive statistics
+```{r}
+tapply(gss$age,gss$sex,mean)
+boxplot(gss$age~gss$sex)
+tab1(gss$income_respondent, sort.group = "decreasing", cum.percent = TRUE,main = "Distribution of respondents' annual income")
+
+tab1(gss$language_knowledge, sort.group = "decreasing", cum.percent = TRUE,main = "Distribution of respondents' language knowledge")
+
+`````
+
+The distribution of respondents' income reveals that most earn less than 25000 dollars and only a few earning 125000 dollars or more annually. The individual incomes are skewed to the right.  The female respondents were more that the males, at 11203 and 9399 respectively. The female had a relatively higher average age of 52.92 years compared to the males who had a mean age of 51.31.
+
+## Methodology
+
+#Inferential statistics
+The inferential statistics were performed using the chi-square test for association and the ordinal logistic regression model. The choice of the ordinal logistic regression model was informed by the fact that the dependent variable, "self\_reported\_health" occurs in ordered levels Stewart et al (2019). The categories were as follows; "Poor", "fair", "Good", "very good" and "Excellent". The  coefficients of the model presents the odds of belonging to a certain category given a level of the independent variable. 
+
+## Results
+Distribution of citizenship in relation to the education level
+````{r}
+
+ed_contigency=table(gss$education, gss$citizenship_status)
+ed_contigency
+
+`````
+Most of the respondents who are Bachelor's degree holders, college certificate holders and higher diploma holders are Canadian citizens by birth. The study further analyzed whether the citizenship type was associated with the education level using the chi-square test for association.
+
+
+````{r}
+
+(ct <- chisq.test(ed_contigency))
+
+`````
+The results of the test imply that an individual's level of education is in fact associated with the citizenship variable. The p-value for the test of approximately 0.00 presents evidence against the null hypothesis that education is not associated with type of citizenship.
+
+#Logistic regression modelling
+
+```{r}
+###Loading the required packages
+require(foreign)
+require(ggplot2)
+require(MASS)
+require(Hmisc)
+require(reshape2)
+##Ordering the dependent variable
+ self_rated_health= factor(gss$self_rated_health, levels = c("Poor", "Fair", "Good","Very good","Excellent"), ordered = TRUE) 
+
+## Fitting ordered logit model and store results 'mod1'
+mod1 <- polr(self_rated_health~income_respondent + age + marital_status+occupation+sex+income_family+lives_with_partner+current_marriage_is_first, data = gss, Hess=TRUE)
+##### Summarizing coefficients in a table
+broom::tidy(mod1)
+#(ctable <- coef(summary(mod1)))
+## calculate and store p values
+#p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
+
+## combined table
+#p_val=(ctable <- cbind(coef(summary(mod1)), "p value" = p));p_val
+
+````
+
+The values for the model coefficients and intercepts are displayed in the table. The results also contain the  standard errors and t values which are used to calculate the p-values.  All the parameters for the fitted model were significant at the 0.05 levels since the p-values were all less than 0.05. The coefficients present the relative influence of the individual variables on the overall self-reported feeling of health. Holding everything other factors constant, an increase in value of age by one unit decreases the expected value of self reported health in log odds by 0.00287.  Respondents who earned less than 25000 dollars annually had higher likelihood of feeling less healthy.  Those in the middle incomes if between 25000 and 74,000 dollars had higher odds of having an excellent self reported health.  The marital\_status, "Living common-law"  is associated with a decreases the expected value of self reported health in log odds by 1.497.
+The married individuals are highly likely to report a better rating for self reported health.  Those individuals in occupational health, natural and applied sciences, management, art and culture, education, manufacturing and utilities as well as service occupation are likely to reporting lowering ratings of self reported health. On the flip side, those in agriculture and related production, and transport and equipment operators are likely to report higher health index. Long hours of work are associated with lower ratings of self reported health.  The odds of feeling less healthy are even more among those who work for over 50 hours per week. Higher family income is found to be a predictor for a higher rating of self-reported health.  individuals that live with partners are on average likely to report higher rating variable had a positive influence on self reported health in both the two levels, it was noted that individuals who reported that current marriage is first have hihger odds of reproting better feeling ofself reported health.
+
+#Discussion
+
+The study used the Gss data set whose target population for 2017 survey is all non-institutionalized persons 15 years of age or older, living in the 10 provinces of Canada. The analysis presents distribution of individuals in terms demographic variables such as gender, age, education, occupation, place of birth, marital status as well as their opinions on their perceived state of health and mental health. The data also contains information house tenure type, house types and living arrangements. The results reveal that most of the individuals are married and live as spouses, most of them also own their house or at least the houses are owned by a member of their households.  Ontario was the most represented province in the survey.   A vast majority of the respondents have a good knowledge of English language or both French and English.  The single detached houses, other housed types and low-rise houses below 5 stories were most common among the individuals in the study sample.
+The following derivations may be made from the results of the regression model; Respondents who earned less than 25000 dollars annually had higher likelihood of feeling less healthy.  Those in the middle incomes if between 25000  and 74,000 dollars had higher odds of having an excellent self reported health. The association between income and higher health index may be explained by the fact that as income increases, one may have access to better medical coverage i.e through an insurance policy or otherwise. The individual may also afford specialized treatment and care, there is also a sense of security that may be associated with high incomes.  The marital status, "Living common-law"  is associated with a decreases the expected value of self reported health in log odds by 1.497.
+
+##Conclusion
+There are certainly a wide range of factors that infuence one's feeling of self reoprted health, among them is the marital status, income, the number of hours of work as well as the occupation. The married individuals are highly likely to report a better rating for self reported health.This may be attributed to the emotional and physical support that one may derive for a partner.  Those individuals in occupational health, natural and applied sciences, management, art and culture, education, manufacturing and utilities as well as service occupation are likely to reporting lowering ratings of self reported health. On the flip side, those in agriculture and related production, and transport and equipment operators are likely to report higher health index. It is not apparent why some occupations are associated with better self reported health while others are not. Long hours of work are associated with lower ratings of self reported health.  The odds of feeling less healthy are even more among those who work for over 50 hours per week. Higher family income is found to be a predictor for a higher rating of self-reported health.  individuals that live with partners are on average likley to report higher rating of self reported health with increase in odds of up to 1.11 times.  Even though the current marriage variable had a positive influence on self reported health in both the two levels, it was noted that individuals who reported that current marriage is first have higher odds of reporting better feeling of self reported health.
+
+# Weaknesses
+
+The main drawback to the analysis was inconsistency in the data due to missing values and na,s, the presence of missing values may have resulted from errors in the data collection process or from respondents failing to give their responses. The missing values may negatively impact the model estimates obtained using the data.  More attention should be given to addressing this challenge of missing values. Another important aspect to be noted is that the study is not causal, since  it does not employ random assignments and is only observational.
+
+# Next Steps
+
+The results of the study were not exhaustive, possible further direction may include using other classification techniques such as the random forest models and the support vector machine for determining the variables the influences ones feeling of health. From the results, it would help advancing the research into analsysing the factors that influence the variation in self reported health index among indivdual from different occupations. Basically, the research should focus on why there are differences in self-reported feeling of health across differentoccupations.
+
+
+## References
+General Social Survey - Family:https://www150.statcan.gc.ca/n1/en/surveys/4501
+Stewart, G., Kamata, A., Miles, R., Grandoit, E., Mandelbaum, F., Quinn, C., & Rabin, L. (2019). Predicting mental health help seeking orientations among diverse Undergraduates: An ordinal logistic regression analysis???. Journal of affective disorders, 257, 271-280.
+
+
+
