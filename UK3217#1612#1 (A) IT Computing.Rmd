@@ -1,0 +1,294 @@
+---
+title: "Untitled"
+output:
+  word_document: default
+  html_document: default
+date: "2023-01-19"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Load standard libraries
+
+```{r}
+library(tidyverse) #data wrangling and data visualization
+library(caTools)#splitting data into training and testing sets
+library(pROC)#measuring and comparing diagnostic test performance
+library(randomForest)#building predictive models
+library("readr") #importing and exporting flat files
+library("ggplot2")#data visualization 
+library("dplyr")#data manipulation
+library("caret")#machine learning algorithms
+library(corrgram)#visualizing correlations
+
+```
+# Setting the working directory and Loading the data set
+```{r}
+setwd("D:/CSDA")
+
+bloodTransfusion<- read.csv("Blood Transfusion Dataset (1).csv")
+
+head(bloodTransfusion)
+
+
+```
+
+
+#Changing Column name for target variable
+```{r}
+colnames(bloodTransfusion)[colnames(bloodTransfusion)=="whether.he.she.donated.blood.in.March.2007"]<-"DonatedMar07"
+#Transforming target variable to factors
+bloodTransfusion$DonatedMar07 <- as.factor(bloodTransfusion$DonatedMar07)
+
+str(bloodTransfusion)
+#Renaming the column names for easier use/reference
+
+n <- c("Recency", "Frequency", "Monetary", "Time", "DonatedMar07")
+colnames(bloodTransfusion) <- n
+
+```
+
+
+
+##### Summary statistics
+```{r}
+
+summary(bloodTransfusion)
+
+```
+
+
+##Exploratory data analysis
+###Boxplot of the Months since Last Donation
+```{r}
+##BOXPLOTS
+ggplot(bloodTransfusion, aes(x = "", y = Time)) +
+  geom_boxplot(color = "blue", fill = "turquoise") +
+  ylab("Months since Last Donation") +
+  ggtitle("Boxplot of the Months since Last Donation") 
+
+```
+
+
+##Boxplot of the Months since Last Donation across the response
+
+
+
+```{r}
+ggplot(bloodTransfusion, aes(x=DonatedMar07, y=Time,color=DonatedMar07)) + 
+  geom_boxplot(aes(fill=DonatedMar07)+ facet_grid(. ~ DonatedMar07))+
+  xlab("DonatedMar07") + ylab("Boxplot of the Months since Last Donation across the response") +theme_bw()
+
+```
+
+
+
+####Scatter plots
+```{r}
+library(ggplot2)
+ggplot(data = bloodTransfusion, aes(x = Time, y =Recency)) +
+  geom_point() +
+  geom_smooth(method=lm)
+
+```
+
+
+
+####Scatter plots
+```{r}
+library(ggplot2)
+ggplot(data = bloodTransfusion, aes(x = Time, y =Frequency)) +
+  geom_point() +
+  geom_smooth(method=lm)
+```
+
+
+####Density plot  to show distribution
+
+```{r}
+ggplot(bloodTransfusion, aes(x=Time)) + 
+  geom_density() + 
+  theme(legend.position="none") + 
+  xlab("Months since Last Donation") + 
+  ggtitle("Months since Last Donation Density") + 
+  geom_vline(aes(xintercept=mean(Time)), color="blue", linetype="dashed", size=1)
+```
+
+
+
+```{r}
+
+ggplot(bloodTransfusion, aes(x=Monetary)) + 
+  geom_density() + 
+  theme(legend.position="none") + 
+  xlab("Total Volume of Blood Donated") + 
+  ggtitle("Total amount  of blood that the donor has donated in C.C") + 
+  geom_vline(aes(xintercept=mean(Monetary)), color="blue", linetype="dashed", size=1)
+
+
+```
+
+####Summary statistics
+```{r}
+
+summary(bloodTransfusion$Time)
+
+```
+
+
+
+
+#####Barplots showing frequencies
+```{r}
+
+ggplot(bloodTransfusion, aes(DonatedMar07)) +
+  geom_bar(stat = "count", aes(fill = DonatedMar07)) + 
+  ggtitle("Distribution of Response variable") + 
+  theme(legend.position="none")
+
+```
+
+
+###Correlation coefficient showing association
+panel.cor <- function(x, y, digits = 2, cex.cor, ...)
+{
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  # correlation coefficient
+  r <- cor(x, y)
+  txt <- format(c(r, 0.123456789), digits = digits)[1]
+  txt <- paste("r= ", txt, sep = "")
+  text(0.5, 0.6, txt)
+```{r}
+
+corrgram(bloodTransfusion, order=NULL, lower.panel=panel.shade, upper.panel=NULL, text.panel=panel.txt,
+         main="Corrgram of the data")
+
+```
+ 
+
+##MODELLING
+
+###Training and testing data sets
+### Split the data into a training and testing set
+
+
+```{r}
+
+# Set seed for reproducibility
+set.seed(102928)
+
+#splits the data in the ratio mentioned in SplitRatio. After splitting marks these rows as logical 
+# TRUE and the the remaining are marked as logical FALSE
+sample <- sample.split(bloodTransfusion, SplitRatio = .75)
+
+# creates a training dataset named train with rows which are marked as TRUE
+training <- subset(bloodTransfusion, sample == TRUE)
+
+# creates a training dataset named test with rows which are marked as FALSE
+testing  <- subset(bloodTransfusion, sample == FALSE)
+
+dim(training) 
+dim(testing)
+
+
+```
+
+##Random Forest Algorithm
+
+```{r}
+set.seed(2304) 
+modFit_RF = train(DonatedMar07 ~ ., method = "rf", data = training, prox = TRUE, na.action=na.omit)
+modFit_RF
+plot(modFit_RF)
+```
+
+
+
+####Variable Importance
+
+```{r}
+rf_imp = varImp(modFit_RF, scale = FALSE)
+rf_imp
+plot(rf_imp)
+```
+
+###Model validation
+
+```{r}
+pred_rf = predict(modFit_RF, testing)
+confusionMatrix(pred_rf, testing$DonatedMar07)
+
+```
+
+
+
+####Applying model to the test sample.
+```{r}
+test_sample = bloodTransfusion
+
+test_sample$pred_rf = predict(modFit_RF, test_sample, type = "prob")[,2]
+
+
+ggplot(test_sample, aes(x=pred_rf)) + 
+  geom_density() + 
+  theme(legend.position="none") + 
+  xlab("Random Forest Probability") + 
+  ggtitle("Probability that they donated in March") + 
+  geom_vline(aes(xintercept=mean(pred_rf)), color="blue", linetype="dashed", size=1)
+
+
+```
+
+
+####Summary of probability 
+```{r}
+
+summary(test_sample$pred_rf)
+```
+
+
+
+
+
+##Logistic Regression
+
+```{r}
+
+set.seed(2304) 
+modFit_lr = train(DonatedMar07 ~ ., data = training, method = "glm", family = "binomial", na.action=na.omit)
+modFit_lr
+
+lr_imp = varImp(modFit_lr, scale = FALSE)
+lr_imp
+
+plot(lr_imp)
+
+```
+
+
+##Generating predictions from Logistic model
+
+```{r}
+pred_lr = predict(modFit_lr, testing)
+confusionMatrix(pred_lr, testing$DonatedMar07)
+
+
+
+test_sample$pred_lr = predict(modFit_lr, test_sample, type = "prob")[,2]
+
+ggplot(test_sample, aes(x=pred_lr)) + 
+  geom_density() + 
+  theme(legend.position="none") + 
+  xlab("Logistic Regression Probability") + 
+  ggtitle("Probability that they donated in March  using Logistic regression") + 
+  geom_vline(aes(xintercept=mean(pred_lr)), color="blue", linetype="dashed", size=1)
+
+
+summary(test_sample$pred_lr)
+
+```
+

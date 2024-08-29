@@ -1,0 +1,225 @@
+---
+title: 'Part II: Bivariate Regressions with R'
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+date: "2022-11-15"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(kableExtra)
+library(descriptr)
+#install.packages("ggpubr")
+library(ggpubr)
+library(rstatix)
+library(readxl)
+library(tinytex)
+#tinytex::install_tinytex()
+```
+
+ 
+```{r}
+#Setting the working directory
+setwd("D:/CSDA/WRK")
+#Loading the data set
+MutualFund=read.csv("MutualFund.csv")
+head(MutualFund)
+
+
+```
+### 2. The capital market line (CML) of portfolio theory postulates a linear relationship between expected return and risk (measured by the standard deviation of the return) for efficient portfolios as follows:
+
+$E ̂_i=β ̂_1+β ̂_2 X_i$
+
+
+where $Ei$ = expected return on portfolio i, and Xi = standard deviation of return. You are given historical data on expected return and standard deviation of return of the portfolios of 34 mutual funds in the United States for the period 1954-1963 in the MutualFund.csv data file, which is found in the Homework 6 folder of Canvas. Expected return is named exp_rtrn and the standard deviation of return is named sd_rtrn.
+```{r}
+return_model=lm(exp_rtrn~sd_rtrn,data = MutualFund)
+summary(return_model)
+```
+
+$H_0$: There is no linear relationship between expected return and risk (measured by the standard deviation of the return) for efficient portfolios.
+
+$H_A$: There is a linear relationship between expected return and risk (measured by the standard deviation of the return) for efficient portfolios.
+
+We will use a linear regression model to compute the $R^2$ statistic, which is a measure of how well the data fit the model. If this statistic is close to 1, that means that the model fits the data very well. We will also compute the $p$-value associated with the $R^2$ statistic to determine whether the model is a good fit for the data at the .01 level of significance.
+
+**Results**:
+
+The results indicate that there is a statistically significant linear relationship between expected return and risk (p-value < 0.01). The R-squared value is 0.689, which means that the model explains 68.9% of the variation in expected return.
+
+The coefficients can be interpreted as follows:
+
+- A one unit increase in risk is associated with a 0.47451  increase in expected return
+- A one unit increase in risk is associated with a 47.45% increase in expected return
+
+
+#### b.	Create a scatterplot with the regression line using ggplot2 and generate the diagnostic plots. Interpret all your results. (6 pts).
+```{r}
+library(ggplot2)
+ggplot(data = MutualFund, aes(x = sd_rtrn, y = exp_rtrn)) +
+  geom_point() +
+  geom_smooth(method=lm)
+```
+
+
+```{r}
+par(mfrow=c(2,2))
+plot(return_model)
+```
+
+
+The scatter plot shows the data points and the regression line. The scatter plot shows that there is a positive relationship between expected returns and risk. The regression line shows that as risk increases, expected returns also increase. The diagnostic plots show evidence of heteroskedasticity, as the residuals are not evenly distributed. This suggests that the model is not accurately predicting the variability of the data. The Q-Q plot shows that the residuals are not normally distributed. There is a cluster of data points around the middle and another cluster in the right corner. This indicates that there is a relationship between expected returns and risk, but it is not a linear relationship. The data points are also not evenly distributed around the regression line, which indicates that the model is not a good fit for the data.
+
+
+
+#### c.	Create a new variable named lnsd_rtrn, representing the natural logarithm of the standard deviation of return (log(sd_rtrn)). Then estimate the following regression model:
+
+```{r}
+library(dplyr)
+
+MutualFund_ln=MutualFund %>% mutate(lnsd_rtrn=log(sd_rtrn))
+head(MutualFund_ln)
+```
+
+```{r}
+
+return_model_ln=lm(exp_rtrn~lnsd_rtrn,data = MutualFund_ln)
+summary(return_model_ln)
+```
+
+This model suggests that there is a positive relationship between the natural logarithm of the standard deviation of return and the expected return. This means that as the standard deviation of return increases, the expected return also increases.  The coefficient on the lnsd_rtrn variable represents the additional expected return for a given unit increase in the natural logarithm of the standard deviation of return.
+
+The coefficient on the lnsd_rtrn variable is positive, indicating that there is a positive relationship between the natural logarithm of the standard deviation of return and expected return. This suggests that as the standard deviation of return increases, expected return also increases.  The model estimates that, on average, a one percent increase in the standard deviation of return is associated with a 7.74 percent increase in the expected value of the return. The coefficient on lnsd_rtrn is significant at the 1% level, indicating that the relationship between expected return and the natural logarithm of the standard deviation of return is statistically significant. This makes intuitive sense, as investors require a higher return to compensate them for the increased risk associated with a higher standard deviation of return.
+
+The adjusted R-squared value for the model is 0.704, which means that the model explains 70.4% of the variation in expected return after adjusting for the number of predictors in the model.
+
+The F-statistic for the model is 79.47, which is significant at the 0.01 level. This means that the model is a significant predictor of expected return.
+
+The p-value for the F-statistic is 0.000, which is significant at the 0.01 level. This means that the model is a significant predictor of expected return.
+
+#### d.	For the regression in part c above, create a scatterplot with the regression line using ggplot2 and generate the diagnostic plots. Interpret all your results. (4 pts).
+
+```{r}
+ggplot(data = MutualFund_ln, aes(x = lnsd_rtrn, y = exp_rtrn)) +
+  geom_point() +
+  geom_smooth(method=lm)
+```
+```{r}
+par(mfrow=c(2,2))
+plot(return_model_ln)
+```
+
+
+The diagnostic plots suggest that the model is a good fit for the data. The residuals appear to be normally distributed, and there is no evidence of heteroscedasticity or autocorrelation.  Based on the diagnostic plots, it appears that there is a linear relationship between the expected return and natural log of return standard deviations. However, the data is not normally distributed, which could impact the results of the regression. Additionally, the data is not evenly distributed, which could also impact the results of the regression. Finally, there appear to be a correlation between the expected return and natural log of return standard deviations from the scatter plot.
+
+#### e.	Which model provides the most accurate results? How do you know? (3 pts)
+
+The model with log sd_returns provides the most accurate results, this is because it has a relatively higher adjusted R^2 of 70.4% compared to the 68.9% from the model with sd_rtrn as the independnet variable.
+
+
+### 3.	Do Problem 62 on page 484 of the Lind, Marchal, and Wathen textbook using the real_estate.csv file. In part (a) and (b), you do not need to do the confidence or prediction intervals. Interpret all your results. (7 pts for part a, 7 pts for part b, 3 pts for part c)
+
+
+```{r}
+
+#Loading estates data set
+estates=read.csv("real_estate-1.csv")
+head(estates)
+```
+#### a.	Let selling price be the dependent variable and the size of the home the independent variable. Determine the regression equation. Estimate the selling price for a home with an area of 2,200 square feet. 
+
+```{r}
+price_model=lm(Price~Size,data = estates)
+
+summary(price_model)
+```
+
+The regression equation is  House price=-15775.88+108*Size of the home. The selling price for a home with an area of 2,200 square feet is $221822.12.
+
+#### b.	Let days on the market be the dependent variable and price be the independent variable. Determine the regression equation. Estimate the days on the market of a home that is priced at $300,000. 
+
+```{r}
+Days_price_model=lm(Price~Days,data = estates)
+summary(Days_price_model)
+```
+The regression equation is  House price=269792+2948*Days on the market. The days on the market for a hosue valued at $\$300000$ is given by; 
+ $Days=\frac{300000-269792}{2948}$
+
+$Days=\frac{300000-269792}{2948}$
+$Days=70.66$
+
+It will take approximately 71 days for a house valued at $\$300000$ to sell.
+
+
+#### c.	Can you conclude that the independent variables “days on the market” and “selling price” are positively correlated? Are the size of the home and the selling price positively correlated? 	Use the 0.5 significance level. Report the P-value of the test. Summarize your results.
+
+Yes, the independent variables "days on the market" and "selling price" are positively correlated. The P-value of the test is 0.0591, which is less than 0.5. Therefore, we can conclude that the two variables are significantly correlated.
+
+### 4.	The file BikeShare.csv contains data on London Bike Shares for 2015 and 2016. The data are from the time periods of 6:00–10:00 am and 4:00-8:00 pm and include the number of new bike shares during these periods. The weather for the collected data excludes snow/rain, and weekends/holidays. The data are documented below.
+
+
+#### a.	Carry out a regression of new bike shares cnt on temperature t1 (i.e., use cnt as the dependent variable). Report and interpret your results. (5 pts)
+```{r}
+Bikeshare=read.csv("BikeShare.csv")
+head(Bikeshare)
+```
+
+```{r}
+bike_temp_model=lm(cnt~t1,data = Bikeshare)
+summary(bike_temp_model)
+```
+
+The regression equation is:
+
+cnt = 1400 + (80.434 * t1)
+
+The results indicate that there is a positive relationship between temperature and new bike shares cnt. Specifically, for every one degree increase in temperature, new bike shares cnt increases by 80.434. The model explains approximately 16% of the variation in new bike shares cnt.
+
+
+#### b.	Is there evidence for a relationship between these two variables? Carry out appropriate hypothesis tests, generate and interpret all relevant statistics and indicators of strength of relationship, and discuss any differences between practical and statistical significance. (7 pts)
+```{r}
+attach(Bikeshare)
+ cor(t1,cnt)
+ cor.test(t1,cnt)
+```
+
+
+There is evidence of a relationship between new bike shares and real temperature in Centigrade variables. The Pearson correlation coefficient is 0.399, which is statistically significant at the p < 0.01 level. The R-squared value is 0.1589, which means that 16% of the variation in new bike shares can be explained by real temperature in Centigrade. This is a moderate strength of relationship. There is a practical significance since the relationship is strong enough to be meaningful.
+
+
+#### c.	Use ggplot2 to generate a scatterplot with the regression line and interpret the result. (3 pts)
+```{r}
+library(ggplot2)
+ggplot(data = Bikeshare, aes(x = t1, y = cnt)) +
+  geom_point() +
+  geom_smooth(method=lm)
+```
+
+The plot shows that as the temperature increases, the count of new bike shares also increases. The regression line indicates that there is a positive linear relationship between the two variables. This means that as the temperature increases by one unit, the count of new bike shares increases by 80 units on average.
+
+#### d.	Generate and interpret the regression diagnostic plots. Describe evidence of any violations of the regression assumptions and discuss the implications. (6 pts)
+
+```{r}
+par(mfrow=c(2,2))
+plot(bike_temp_model)
+
+```
+
+
+The diagnostic plots for the count of new bike shares and temperature with the regression show evidence of violations of the regression assumptions. There is evidence of non-linearity, heteroscedasticity, and autocorrelation. These violations can lead to biased estimates of the regression coefficients and can impact the interpretation of the results.
+
+
+#### e.	If the temperature is 37 degrees centigrade, what is the predicted number of bike shares? Do you think this prediction is accurate? Why or why not? (4 pts)
+
+
+If the temperature is 37 degrees centigrade, the predicted number of bike shares is 4376. 
+
+The prediction is not accurate because the model is not a good fit for the data. The R-squared value is only 0.1589, which means that the model explains only 16% of the variance in the data. The model also has a large standard error, which means that the predictions are not very precise.

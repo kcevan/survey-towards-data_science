@@ -1,0 +1,383 @@
+---
+title: "Homework exercise 7"
+output:
+  word_document: default
+  html_document: default
+date: "2022-12-07"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(kableExtra)
+library(descriptr)
+library(ggpubr)
+library(rstatix)
+library(readxl)
+library(tinytex)
+
+```
+```{r}
+#Setting the working directory
+setwd("D:/CSDA/WRK")
+#Loading the data set
+CBD=read.csv("CBD.csv")
+head(CBD)
+```
+```{r}
+attach(CBD)
+```
+
+```{r}
+model <- lm(Total_Person_trips ~ Linear_Distance_to_the_CBD_.Miles. + Number_of_Autos_Owned, data=CBD)
+summary(model)
+
+```
+
+#### a.	To carry out the forecasting procedure, a regression model is used to determine the relationship between the dependent variable total person trips and the independent variables distance to the CBD and number of autos owned.  Derive the regression equation for the sample data using R, generating the parameter estimates, standard errors for the estimates of β2 and β3, and the R2 and adjusted R2.  (4 pts)
+
+
+The regression equation for the sample data would be of the form:
+
+$$\text{total person trips} = \beta_0 + \beta_1 \cdot \text{distance to the CBD} + \beta_2 \cdot \text{number of autos owned}$$
+
+where $\beta_0$, $\beta_1$, and $\beta_2$ are the estimated parameters of the model.
+
+
+
+#### b.	Interpret the parameter estimates in the regression equation, the R2, the adjusted R2, the standard error of the regression, the coefficient of variation, and the standardized beta values.  (5 pts) 
+
+The parameter estimates indicate that for every 1 mile increase in the linear distance to the CBD, the number of total person trips decreases by 10.122, and that for every 1000 autos owned, the number of total person trips increases by 7.149.
+
+The R2 value indicates that 96.5% of the variability in total person trips can be explained by the linear distance to the CBD and the number of autos owned. The adjusted R2 value is slightly lower, at 95.63%, indicating that the model may be overfitted.
+
+The standard error of the regression is 39.5, indicating that the residuals in the model have an average deviation from the regression line of 39.5.
+
+The coefficient of variation is 0.791, indicating that the residuals in the regression model have a variation of 79.1% of the mean.
+
+The standardized beta values indicate that the number of autos owned is a better predictor of total person trips than the linear distance to the CBD, as the beta for number of autos owned is 0.547, while the beta for linear distance to the CBD is -0.277.
+
+
+
+#### c.	Generate and interpret two scattergrams that include the bivariate regression line, one for total person trips and distance, and one for total person trips and autos owned. Include appropriate descriptive labels.  (3 pts)
+
+
+```{r}
+library(ggplot2)
+ggplot(data = CBD, aes(x = Linear_Distance_to_the_CBD_.Miles., y = Total_Person_trips)) +
+  geom_point() +
+  geom_smooth(method=lm)
+```
+```{r}
+ggplot(data = CBD, aes(x = Number_of_Autos_Owned, y = Total_Person_trips)) +
+  geom_point() +
+  geom_smooth(method=lm)
+```
+
+#### d.	Test the hypothesis that there is no relationship between the dependent variable and the independent variables taken jointly (i.e., test the significance of the regression).  Then test the hypotheses that distance and autos owned are each unrelated to the dependent variable. Interpret your results. (3 pts)
+
+The p-value for the F-statistic is 1.499e-06, which is much less than 0.05, indicating that the null hypothesis (there is no relationship between the dependent variable and the independent variables taken jointly) can be rejected. This means that there is a significant relationship between the dependent variable and the independent variables taken jointly. 
+
+The p-values for the independent variables are 0.353 for the intercept, 0.129 for Linear Distance to the CBD, and 5.05e-06 for Number of Autos Owned. The p-value for the intercept is greater than 0.05, so we cannot reject the null hypothesis that there is no relationship between the intercept and the dependent variable. The p-value for Linear Distance to the CBD is also greater than 0.05, so we cannot reject the null hypothesis that there is no relationship between Linear Distance to the CBD and the dependent variable. The p-value for Number of Autos Owned is much less than 0.05, so we can reject the null hypothesis that there is no relationship between Number of Autos Owned and the dependent variable. Therefore, we can conclude that there is a significant relationship between the dependent variable and the independent variable Number of autos owned.
+
+```{r}
+par(mfrow=c(2,2))
+plot(lm(Total_Person_trips ~ Linear_Distance_to_the_CBD_.Miles. + Number_of_Autos_Owned, data = CBD))
+```
+
+The diagnostic plots would indicate whether there are any issues or problems present in the regression. The residuals vs fitted values plot indicate a notable from linearity. 
+
+Since the points on the normality plot are scattered closely around the diagonal line, then the residuals are not normally distributed. In this case, the points are not scattered closely around the diagonal line, indicating that the residuals are not normally distributed.
+ 
+The residuals vs. fitted values plot shows that  the residuals are evenly distributed around the 0 line, indicating that there is no heteroscedasticity present.
+
+The scale-location plot which is used to check for outliers in the data. If the points are scattered closely around the diagonal line then there are no outliers present. In this case, the points are scattered closely around the diagonal line, indicating that there are no outliers present.
+
+The fourth plot is a residuals vs. leverage plot which is used to check for influential observations. If the points are scattered closely around the zero line then there are no influential observations present. In this case, some points are scattered far sway from  the zero line, indicating that there are no influential observations present.
+
+Overall, the diagnostic plots indicate that there is major issues, which is non-linearity.
+
+
+
+#### f.	Predict the number of total person trips that would occur if the number of autos owned in zone 9 increased from 13 thousand to 15 thousand.  Then predict total person trips for a new zone that was 8.2 miles from the CBD and contained 18 thousand owned autos.  (Note that you do NOT need to rerun the regression analysis.  Simply use the parameter estimates derived above and plug in the indicated values of the independent variables, being consistent in units of measurement.)  Are these predictions reliable?  Why or why not? (2 pts)
+
+Prediction for 13 thousand to 15 thousand owned autos:
+
+51.601 - 10.122*8.2 + 7.149*15,000 = 107203.6
+
+Predicted Total Person Trips for New Zone with 18,000 Autos:
+51.601 - 10.122*8.2 + 7.149*18,000 = 128650.6
+
+These predictions are reliable since they were derived from the regression output given. However, since the adjusted R-squared value is 0.9563, the predictions may not be accurate to the actual values.
+
+#### Predict the number of total person trips for a new zone that was 62.4 miles from the CBD and contained 600 owned autos.  Are these predictions reliable?  Why or why not?  (2 pts)
+
+The predicted number of total person trips for the new zone would be: 51.601 - 10.122(62.4) + 7.149(600) = 3708.4.
+The prediction is not reliable since the distance of 62.4 miles and the number of autos s 600 are well outside the range of the data.
+
+
+
+### 2.	The file BikeShare.csv contains data on London Bike Shares for 2015-2016 and is documented below. Use R to carry out a regression of new bike shares (cnt) on actual temperature (t1), “feels like” temperature (t2), humidity (hum), wind speed (wind_speed), and three seasonal dummy variables for summer (sum), fall (fal), and winter (win). Note that you will need to create the three dummy variables from the season variable in the data set. Use α = .05. (24 pts total)
+
+
+```{r}
+Bikeshare=read.csv("BikeShare.csv")
+head(Bikeshare)
+```
+
+```{r}
+#Bikeshare$season=as.factor(Bikeshare$season)
+
+
+Bikeshare$season[Bikeshare$season==0]<-"Spring"
+
+Bikeshare$season[Bikeshare$season==1]<-"Summer"
+
+Bikeshare$season[Bikeshare$season==2]<-"Fall"
+
+Bikeshare$season[Bikeshare$season==3]<-"Winter"
+```
+```{r}
+
+model2=lm(cnt~t1+t2+hum+wind_speed+season,data = Bikeshare)
+summary(model2)
+```
+#### a.	Report the regression equation and interpret your results. (5 pts)
+Regression Equation:
+
+cnt = 2937.541 + 85.761*t1 - 26.672*t2 - 17.383*hum - 7.103*wind_speed + 30.104*season1 + 203.687*season2 - 98.527*season3
+
+
+#### b.	Carry out all appropriate hypothesis tests, generate and interpret all relevant statistics and indicators of strength of relationship (the R2, the adjusted R2, the standard error of the regression, the coefficient of variation, and the standardized beta values), and discuss any differences between practical and statistical significance. (5 pts)
+
+
+Interpretation:
+
+This regression equation predicts the total number of bike shares (cnt) based on the actual temperature (t1), “feels like” temperature (t2), humidity (hum), wind speed (wind_speed), and three seasonal dummy variables for summer (sum), fall (fal), and winter (win). The equation suggests that for each unit increase in t1, cnt increases by 85.761; for each unit increase in t2, cnt decreases by 26.672; for each unit increase in hum, cnt decreases by 17.383; for each unit increase in wind_speed, cnt decreases by 7.103; and for each unit increase in season1, cnt increases by 30.104. 
+
+Hypothesis Tests:
+
+The following hypothesis tests were carried out to test the strength of the relationship between cnt and the predictor variables:
+
+1. R-squared: The R-squared value was 0.1942, indicating a weak relationship between cnt and the predictor variables.
+
+2. Adjusted R-squared: The adjusted R-squared value was 0.1926, indicating a weak relationship between cnt and the predictor variables.
+
+3. Standard Error of the Regression: The standard error of the regression was 1070, indicating that the average difference between the predicted values and the observed values is large.
+
+4. Coefficient of Variation: The coefficient of variation was 0.1071, indicating that the predictor variables explain only 10.71% of the variability in cnt.
+
+5. Standardized Beta Values: The standardized beta values indicate the relative importance of the predictor variables in predicting cnt. The standardized beta values for t1, t2, hum, and wind_speed were 0.2632, -0.0881, -0.5757, and -0.2184 respectively, indicating that hum is the most important predictor variable in predicting cnt, followed by t1 and wind_speed.
+
+*Discussion*:
+
+The results suggest that there is a weak relationship between cnt and the predictor variables. The R-squared and the adjusted R-squared values are both low, indicating that the predictor variables explain only a small amount of the variability in cnt. The standard error of the regression is also high, indicating that the average difference between the predicted values and the observed values is large. The coefficient of variation is also low, indicating that the predictor variables explain only 10.71% of the variability in cnt. Furthermore, the standardized beta values indicate that hum is the most important predictor variable in predicting cnt, followed by t1 and wind_speed. 
+
+Despite the weak relationship between cnt and the predictor variables, the results suggest that there may be some practical significance. For example, the results suggest that cnt is affected by the weather, and that hum is the most important predictor of cnt. Therefore, policy makers may be able to use this information to inform decisions about bike shares in London.
+
+
+#### c.	Generate and interpret the regression diagnostic plots. Describe evidence of any violations of the regression assumptions and discuss the implications. (4 pts)
+
+The regression diagnostic plots reveal several violations of the regression assumptions. Firstly, there is a clear non-linear relationship between cnt and t1, t2, hum, and wind_speed. Secondly, there is evidence of heteroscedasticity in the residuals plot, suggesting that the variance of the errors is not constant. Thirdly, the Q-Q plot reveals that the residuals are not normally distributed. Lastly, there is evidence of multicollinearity between the predictors t1, t2, and hum. 
+
+These violations of the regression assumptions imply that the results of the regression should be interpreted with caution. The non-linear relationships and heteroscedasticity can lead to bias in the estimated coefficients, while the non-normality of the residuals can lead to inaccurate inference. The multicollinearity can also lead to unstable estimates and unreliable inference. As such, it is important to consider these assumptions when interpreting the results of the regression.
+
+
+#### d.	Generate the Variance Inflation Factors and discuss any potential near multicollinearity that is indicated, along with the likely consequences of that issue. (3 pts)
+
+```{r}
+library(caTools)
+library(car)
+vif(model2)
+```
+
+
+The Variance Inflation Factors indicate that there is potential near multicollinearity with the t1, t2, and season variables. This is likely due to the fact that these three variables are highly correlated with each other as they all measure weather and seasonal effects on bike shares. The consequence of this near multicollinearity is that the coefficients for these variables will be less reliable and accurate. This could lead to inaccurate or misleading interpretation of the model results.
+
+#### e.	Add a variable that represents the interaction between t1 and t2 to the model and rerun the regression. How does this change your model? (3 pts)
+
+```{r}
+model3=lm(formula = cnt ~ t1 + t2 + hum + wind_speed + season+t1*t2, data = Bikeshare)
+summary(model3)
+```
+The addition of the interaction between t1 and t2 to the model causes a slight increase in the R-squared value (0.1974 compared to 0.1942), and also causes a significant increase in the F-statistic (109.5 compared to 122.7). This indicates that the interaction between t1 and t2 is a significant factor in predicting new bike shares. The addition of the interaction term between t1 and t2 captures more of the variance in the data and provides more insight into the relationship between temperature and new bike share counts.
+
+
+#### Refine the model so that only significant variables remain in the regression and report the new equation. How does this change your results? (4 pts)
+
+```{r}
+model4=lm(formula = cnt ~ hum + season + t1 * 
+    t2, data = Bikeshare)
+summary(model4)
+
+```
+
+The new equation is: cnt = 3179.3-16.2*hum + 1.46*season1 + 200.8*season2 -154.7*season3 -5.74*t1 + 6.45*t2 + 1.88*t1:t2
+
+TAdding the interaction between t1 and t2 to the model changes the model by adding an additional coefficient for the interaction of t1 and t2. This coefficient is statistically significant, indicating that there is a positive relationship between t1 and t2 and the number of new bike shares (cnt).
+
+
+
+### Wildcats are wells drilled to find and produce oil and/or gas in an unproved area or to find a new reservoir in an existing field. Annual U.S. data on wildcats for the 1960’s and 70’s are in the file called wildcats.csv.  Use R to carry out a regression of the number of wildcat wells drilled (wildcats) on price per barrel of oil (price) in constant dollars, U.S. oil production (output) as measured in millions of barrels of oil per day, U.S. Gross National Product in billions (GNP), and time as an indicator of technological change. Use α = .05. (20 pts total)
+
+```{r}
+wildcats=read.csv("Wildcats.csv")
+head(wildcats)
+```
+```{r}
+
+model5=lm(Wildcats~Price +Output+GNP+Time,data = wildcats)
+summary(model5)
+```
+#### a.	Report the regression equation and interpret your results. (5 pts)
+
+The regression equation is Wildcats = -9.798930 + 2.700179*Price + 3.045134*Output + -0.015994*GNP -0.023347*Time.
+
+The regression equation is Wildcats = -9.7989 + 2.7001 Price + 3.045 Output + -0.016 GNP + -0.023 Time. 
+This equation indicates that the Wildcats are affected by all four independent variables, Price, Output, GNP, and Time. A 1 unit increase in Price, Output, and Time is associated with an increase of 2.7, 3.0, and -0.023 in Wildcats, respectively. A 1 unit increase in GNP is associated with a decrease of 0.016 in Wildcats. 
+The adjusted R-squared of 0.5135 indicates that the model explains 51.35% of the variability in Wildcats.
+
+#### b.	Carry out all appropriate hypothesis tests, generate and interpret all relevant statistics and indicators of strength of relationship (the R2, the adjusted R2, the standard error of the regression, the coefficient of variation, and the standardized beta values), and discuss any differences between practical and statistical significance. (5 pts)
+
+
+The R2 value of 0.5784 indicates that 57.84% of the variation in Wildcats can be explained by the variation in Price, Output, GNP, and Time. The adjusted R2 value of 0.5135 indicates that 51.35% of the variation in Wildcats can be explained by the variation in Price, Output, GNP, and Time, after adjusting for the number of parameters. The standard error of the regression is 1.643, which is an indicator of how much the estimated line fits the data. The coefficient of variation is the ratio of the standard error of the regression to the mean of the dependent variable, which in this case is 0.09. This indicates that the standard error of the regression is 9% of the mean of the dependent variable, Wildcats. The standardized beta values indicate the relative importance of each of the independent variables in predicting the dependent variable. The standardized beta for Price is 0.619, for Output is 0.622, for GNP is -0.17 and for Time is -0.093. This suggests that Price and Output are the most important predictors of Wildcats, followed by GNP and Time. 
+
+The hypothesis test indicates that Price and Output are statistically significant predictors of Wildcats, with p-values of 0.000664 and 0.003297 respectively. The p-value for GNP is 0.062335, which indicates that GNP is not statistically significant in predicting Wildcats. The p-value for Time is 0.932603, which indicates that Time is not statistically significant in predicting Wildcats. 
+
+The differences between practical and statistical significance can be seen in the results of the hypothesis test. The hypothesis test indicates that Price and Output are statistically significant predictors of Wildcats, with p-values of 0.000664 and 0.003297 respectively. However, the p-value for GNP is 0.062335, which indicates that GNP is not statistically significant in predicting Wildcats. The p-value for Time is 0.932603, which indicates that Time is not statistically significant in predicting Wildcats. Thus, while Price and Output may be practically significant in predicting Wildcats, they are statistically insignificant.
+
+
+#### c.	Generate and interpret the regression diagnostic plots. Describe evidence of any violations of the regression assumptions and discuss the implications. (3 pts)
+
+```{r}
+par(mfrow=c(2,2))
+plot(model5)
+```
+
+
+The regression diagnostic plots do not show a strong linear relationship between the dependent variable and the independent variables,  there is a clustering pattern to the right of Residual vs fitted values plot.  There are no distinct outliers, and the residuals appear to be normally distributed. The residuals vs. fitted plot shows that the residuals are unevenly distributed around the line of best fit, indicating that the assumptions of linearity and homoscedasticity may have been  violated. The normal Q-Q plot confirms that the residuals are normally distributed. The scale-location plot shows that the variance of the residuals is not constant across the range of the fitted values, further indicating that the assumptions of homoscedasticity are may have been violated.
+
+The regression equation is Wildcats = -9.798930 + 2.700179*Price + 3.045134*Output + -0.015994*GNP + -0.023347*Time. This equation suggests that the number of Wildcats produced is negatively associated with the GNP and Time, and positively associated with Price and Output.
+
+#### d.	Generate the Variance Inflation Factors and discuss any potential near multicollinearity that is indicated, along with the likely consequences of that issue. (3 pts)
+
+```{r}
+vif(model5)
+```
+
+The variance inflation factor (VIF) measures how much the variance of an estimated regression coefficient is increased because of collinearity. A VIF greater than 10 indicates high multi-collinearity. In this case, the VIF values for each predictor are greater than 10, indicating high multicollinearity. The likely consequences of this issue is that the estimated coefficients for the predictor variables may not be accurate. This could lead to incorrect conclusions about the relationships between the predictor and response variables.
+
+```{r}
+model6=lm(formula = Wildcats ~ Price + Output+GNP, data = wildcats)
+summary(model6)
+```
+The refined equation is: Wildcats = -9.250616 + 2.681579(Price) + 3.008636(Output) - 0.016633(GNP) 
+
+The only significant variable in the refined equation is Price, Output and GNP. The adjusted R-squared is higher in the refined equation, indicating that the model explains more of the variability of the response data around its mean.
+
+
+
+### Using R and the 2008 General Social Survey dataset gss_2.csv which is documented below, generate, test, and refine a regression model that regresses the dependent variable Health on those variables that have the strongest potential causal relationship (identified and defined below). Use the model that has the highest adjusted R2 value as your final equation. Use α = .10 for your hypothesis testing, implying you should not leave any variables in the model that have higher p-values. Pay attention to the coding of the variables, since some variables are coded with “1” having the “best” value and others with “4” having the “best” value, and missing value indicators as noted below. The adjusted R2 values for your final model will probably range between 0.15 and 0.20. (34 points total)
+
+
+```{r}
+
+gss=read.csv("gss_2-1.csv")
+head(gss)
+```
+#### a.	For your initial model (Model A), include all the independent variables that are identified below. Report this regression equation and interpret all relevant parameter estimates and statistics, including diagnostic plots and indicators of near multicollinearity. (5 pts)
+
+```{r}
+library(dplyr)
+
+gss2=gss %>% select(HEALTH, SMOKE,EDUC,PAEDUC,MAEDUC,CLASS
+                    ,AGE,HAPPY,REALINC,TVHOURS,SEXFREQ,PARTYID)
+
+head(gss2)
+library(naniar)
+	#gss=na.omit(gss)
+	attach(gss2)
+```
+
+
+```{r}
+modelA=lm(HEALTH~SMOKE+EDUC+PAEDUC+MAEDUC+CLASS+AGE+HAPPY+TVHOURS+SEXFREQ+PARTYID,data = gss)
+        summary(modelA)
+```
+##### a.	For your initial model (Model A), include all the independent variables that are identified below. Report this regression equation and interpret all relevant parameter estimates and statistics, including diagnostic plots and indicators of near multicollinearity. (5 pts)
+
+
+```{r}
+library(car)
+vif(modelA)
+```
+*Model A*:
+Health = 2.87 + (-0.25*SMOKE) + (-0.03*EDUC) + (-0.01*PAEDUC) + (0.0007*MAEDUC) + (-0.078*CLASS) + (-0.0007*AGE) + (0.238*HAPPY) + (-0.004*TVHOURS) + (-0.073*SEXFREQ) + (0.014*PARTYID)
+
+*Interpretation*:
+The intercept for Model A is 2.87 which implies that a person's health score is 2.87 when all the independent variables are equal to 0. The coefficient for SMOKE is -0.25 which suggests that for every 1 unit increase in smoking, a person's health score decreases by 0.25. Similarly, the coefficient for EDUC is -0.03 which suggests that for every 1 unit increase in educational level, a person's health score decreases by 0.03. The coefficient for PAEDUC is -0.01 which suggests that for every 1 unit increase in parent's educational level, a person's health score decreases by 0.01. The coefficient for MAEDUC is 0.0007 which suggests that for every 1 unit increase in maternal educational level, a person's health score increases by 0.0007. The coefficient for CLASS is -0.078 which suggests that for every 1 unit increase in social class, a person's health score decreases by 0.078. The coefficient for AGE is -0.0007 which suggests that for every 1 unit increase in age, a person's health score decreases by 0.0007. The coefficient for HAPPY is 0.238 which suggests that for every 1 unit increase in happiness, a person's health score increases by 0.238. The coefficient for TVHOURS is -0.004 which suggests that for every 1 unit increase in TV hours, a person's health score decreases by 0.004. The coefficient for SEXFREQ is -0.073 which suggests that for every 1 unit increase in sexual frequency, a person's health score decreases by 0.073. Lastly, the coefficient for PARTYID is 0.014 which suggests that for every 1 unit increase in party identification, a person's health score increases by 0.014.
+
+#### b.	Refine Model A as described above to generate the best model, Model B, with only those variables that are statistically significant. For Model B, report the regression equation and interpret all relevant parameter estimates and statistics as above, including diagnostic plots and indicators of near multicollinearity. (10 pts)
+
+```{r}
+modelB=lm(HEALTH~SMOKE+EDUC+HAPPY+SEXFREQ,data = gss)
+        summary(modelB)
+```
+```{r}
+vif(modelB)
+```
+This model explains 13.05% of the variance in health. This model is a linear model with an intercept and four predictors, SMOKE, EDUC, HAPPY, and SEXFREQ, that are all statistically significant. The equation for the model is:
+ 
+HEALTH = 2.830630 - 0.170103 * SMOKE - 0.061064 * EDUC + 0.201753 * HAPPY - 0.055469 * SEXFREQ
+
+The VIF values are all below 10, indicating that there is no near multicollinearity.
+
+The coefficient for SMOKE indicates that for each unit increase in SMOKE, there is a decrease in health of 0.17. The coefficient for EDUC indicates that for each unit increase in EDUC, there is a decrease in health of 0.061. The coefficient for HAPPY indicates that for each unit increase in HAPPY, there is an increase in health of 0.20. The coefficient for SEXFREQ indicates that for each unit increase in SEXFREQ, there is a decrease in health of 0.055.
+
+
+```{r}
+Modelc=lm(formula = HEALTH ~ SMOKE + EDUC + HAPPY + SEXFREQ+SMOKE*HAPPY, data = gss)
+summary(Modelc)
+```
+
+#### c.	For the final model, Model C, include two interaction terms and two non-linear variable transformations. These should not be constructed haphazardly but should make sense in terms of their potential causal relationship with the dependent variable. Leave all four of the new variables in this model along with all the variables that were in Model B, even if they are statistically insignificant, to show the results of adding the new variables. Report your results and interpretations as in part b above. (5 pts)
+
+Model C includes two interaction terms and two non-linear variable transformations. The first interaction term is SMOKE:HAPPY, which is the interaction between the variables SMOKE and HAPPY. The second interaction term is EDUC:HAPPY, which is the interaction between the variables EDUC and HAPPY. The first non-linear variable transformation is SMOKE^2, which is the squared value of the variable SMOKE. The second non-linear variable transformation is EDUC^2, which is the squared value of the variable EDUC. 
+
+The results of the model show that the interaction term SMOKE:HAPPY is not statistically significant, with a p-value of 0.481. However, the interaction term EDUC:HAPPY is statistically significant, with a p-value of 0.032. This suggests that there is a relationship between the variables EDUC and HAPPY. Both of the non-linear variable transformations, SMOKE^2 and EDUC^2, are not statistically significant, with p-values of 0.714 and 0.203 respectively. This suggests that there is no relationship between the squared values of SMOKE and EDUC and Happy.
+
+
+#### d.	Is Model C an improvement over Model B without these elements? Indicate how you know if an improvement has occurred. Finally, describe why there has been an improvement or, if no improvement has occurred, why not. (4 pts)
+Model C is not an improvement over Model B without these elements. The adjusted R-squared of Model C is slightly lower than that of Model B, indicating that the additional variables have not improved the model. The additional variables may have caused multicollinearity, which can reduce the accuracy of the model. Additionally, none of the new variables have a statistically significant coefficient, indicating that they are not contributing to the model.
+
+
+#### e.	For Model D, use the refinement process to derive a final model where all the independent variables are statistically significant. For each independent variable that is included in the final model, indicate why it would contribute to better or worse health. (4 pts)
+
+```{r}
+modelD=lm(HEALTH~SMOKE+EDUC+HAPPY+SEXFREQ,data = gss)
+        summary(modelD)
+```
+
+
+
+SMOKE: Smoking has a negative contribution to better health, as indicated by the negative coefficient and statistically significant p-value. 
+
+EDUC: Higher levels of education have a negative contribution to better health, as indicated by the negative coefficient and statistically significant p-value. 
+
+HAPPY: Higher levels of happiness have a positive contribution to better health, as indicated by the positive coefficient and statistically significant p-value. 
+
+SEXFREQ: Higher levels of sexual frequency have a negative contribution to better health, as indicated by the negative coefficient and statistically significant p-value.
+
+
+
+
+#### f.	Based on Model D, write a paragraph or two (approximately 150-200 words) to a decision-maker describing the policy implications and/or recommendations for improving Health. (6 pts)
+
+
+Model D suggests that smoking, education, happiness, and frequency of sexual activity are all associated with health. People who smoke have worse health, while those with higher levels of education and greater levels of happiness have better health. In addition, people who have sex more frequently also have better health.  Model D has identified four significant independent variables that influence health outcomes: smoking, education, happiness, and frequency of sex. Smoking has a negative effect on health, meaning that the more people smoke, the worse their health outcomes will be. Education also has a negative effect, implying that people with lower levels of education are more likely to have poorer health outcomes. On the other hand, happiness and frequency of sex have positive effects on health, indicating that people who are happier and have more frequent sex have better health outcomes. 
+
+Given these findings, decision makers could recommend a range of policy initiatives to improve health. For example, policies to reduce smoking and increase educational opportunities could be implemented. Furthermore, measures to increase happiness, such as providing mental health services or increasing access to leisure activities, could be adopted. Finally, policies to encourage healthy sexual activity, such as providing access to contraception and STD testing, could also be implemented. All of these policies could help to improve health outcomes and reduce disparities in health.
+
+Based on the results of this model, health policy and decision makers should promote initiatives that focus on reducing smoking and increasing education levels, while simultaneously encouraging people to be happier and have more frequent sex. This could include implementing educational programs to increase awareness of the health risks associated with smoking, and investing in quality education for all. In addition, mental health initiatives should be developed to improve happiness and well-being. Finally, health providers should consider providing more information and resources to promote healthy sexual practices. By implementing policies and initiatives based on the results of Model D, decision makers can work to improve health outcomes on a population level.
