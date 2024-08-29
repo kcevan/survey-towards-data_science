@@ -1,0 +1,1940 @@
+---
+title: "Racing data for 2021 and 2022"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+date: "2023-12-19"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+rm(list = ls())
+
+
+```
+
+```{r,echo=FALSE}
+# Load necessary libraries
+library(dplyr)
+library(readxl)
+library(tidyverse)
+library(epiDisplay)
+#file.choose()
+
+setwd("D:/CSDA/WRK/")
+# Read the Excel file into a data frame
+horse_racing_data_2021 <- read.csv("D:\\CSDA\\WRK\\results-20211201-20221130.csv")
+
+#head(horse_racing_data_2021)
+
+# Step 1: Filter out races marked as "Trial"
+horse_racing_data_2021 <- horse_racing_data_2021  %>%
+  filter(!meeting_is_trial=="true")
+
+```
+```{r,echo=FALSE}
+#horse_racing_data_2022=na.omit(horse_racing_data_2022)
+# Step 2: Select relevant columns
+# Data Cleaning and Filtering
+
+horse_race_data_cleaned21 <- horse_racing_data_2021 %>%
+  dplyr::select(race_aap_id,  meeting_date, meeting_is_trial, meeting_region, race_start_time, track_code_3, track_code_5,
+    run_result_favourite,  # Convert to character
+    run_result_position_finish, race_result_starters, tab_nsw_win_final, tab_nsw_plc_final,
+    race_distance, condition_age, condition_class, race_result_going
+  ) %>%
+  filter(run_result_favourite == "true") %>%
+  na.omit()
+# Remove duplicates based on race_aap_id
+horse_race_data_cleaned21 <- horse_race_data_cleaned21 %>%
+  distinct(race_aap_id, .keep_all = TRUE)
+
+head(horse_race_data_cleaned21)
+ 
+
+```
+
+```{r,echo=FALSE}
+
+# Assuming your analyzed data frame is named "horse_racing_data_results_condition"
+
+# Export the data to a CSV file
+write.csv(horse_race_data_cleaned21, "horse_race_data_cleaned21.csv")
+
+# Display a message indicating successful export
+cat("Data exported to 'horse_racing_results_condition.csv' successfully.\n")
+```
+```{r,echo=FALSE}
+
+# Step 3: Separate data by meeting region
+country_data <- horse_race_data_cleaned21%>%
+  filter(meeting_region == "C")
+
+
+provincial_data <- horse_race_data_cleaned21%>%
+  filter(meeting_region == "P")
+
+metropolitan_data <- horse_race_data_cleaned21%>%
+  filter(meeting_region == "M")
+
+```
+```{r,echo=FALSE}
+
+# 3. Separate data by meeting_region
+metropolitan_data <- horse_race_data_cleaned21 %>%
+  filter(meeting_region == "M")
+
+country_data <- horse_race_data_cleaned21 %>%
+  filter(meeting_region == "C")
+
+provincial_data <- horse_race_data_cleaned21 %>%
+  filter(meeting_region == "P")
+
+# 4. Calculate total stats for each meeting region
+metropolitan_total_stats <- metropolitan_data %>%
+  summarise(
+    total_races = n(),
+    total_wins = sum(run_result_position_finish == 1),
+    total_places = sum(run_result_position_finish %in% c(1,2, 3))
+  )
+
+country_total_stats <- country_data %>%
+  summarise(
+    total_races = n(),
+    total_wins = sum(run_result_position_finish == 1),
+    total_places = sum(run_result_position_finish %in% c(1,2, 3))
+  )
+
+provincial_total_stats <- provincial_data %>%
+  summarise(
+    total_races = n(),
+    total_wins = sum(run_result_position_finish == 1),
+    total_places = sum(run_result_position_finish %in% c(1,2, 3))
+  )
+
+# 5. Order races chronologically
+metropolitan_data <- metropolitan_data %>%
+  arrange(meeting_date, race_start_time)
+
+country_data <- country_data %>%
+  arrange(meeting_date, race_start_time)
+
+provincial_data <- provincial_data %>%
+  arrange(meeting_date, race_start_time)
+
+# Analyze favourite result (win, place, fail)
+
+# Create a new column for the result based on win, place, no place, or fail
+favourite_results<- horse_race_data_cleaned21 %>%
+  mutate(
+    result = case_when(
+      run_result_position_finish == 1 ~ "Win",
+      run_result_position_finish %in% c(1,2, 3) & race_result_starters >= 8 ~ "Place",
+      run_result_position_finish %in% c(2) & race_result_starters %in% c(7, 6, 5) ~ "Place no diidend",
+      run_result_position_finish == 1 & race_result_starters %in% c(4, 3, 2) ~ "Win",
+      TRUE ~ "No Place"
+    )
+  )
+
+# 7. Calculate average win and place prices
+average_win_price <- mean(favourite_results$tab_nsw_win_final, na.rm = TRUE)
+average_place_price <- mean(favourite_results$tab_nsw_plc_final, na.rm = TRUE)
+
+# Print the table
+#head(favourite_results)
+#print(metropolitan_total_stats)
+##print(country_total_stats)
+#print(provincial_total_stats)
+#print(average_win_price)
+#print(average_place_price)
+
+
+
+```
+
+
+
+## Distribution of favorite races across meeting regions
+```{r,echo=FALSE}
+tab1(horse_race_data_cleaned21$meeting_region)
+```
+
+## QUESTIONS
+
+# Group by meeting_region and calculate the frequency of favorite wins
+### 1.	For all Country races how often did the favourite win.
+```{r,echo=FALSE}
+library(dplyr)
+
+total_country_races <- horse_race_data_cleaned21 %>%
+  filter(meeting_region == "C") %>%
+  nrow()
+
+country_favorite_wins <- horse_race_data_cleaned21 %>%
+  filter(meeting_region == "C",run_result_position_finish == 1) %>%
+  nrow()
+
+percentage_favorite_wins <- (country_favorite_wins / total_country_races ) * 100
+
+cat("Number of Country races where the favorite won:", country_favorite_wins, "\n")
+cat("Total number of country races:", total_country_races, "\n")
+cat("Percentage of favorite wins in country races:", percentage_favorite_wins, "%\n")
+
+
+
+```
+
+
+
+### 2.	For all Provincial races how often did the favourite win.
+```{r,echo=FALSE}
+
+total_provincial_races <- horse_race_data_cleaned21 %>%
+  filter(meeting_region == "P") %>%
+  nrow()
+
+provincial_favorite_wins <- horse_race_data_cleaned21 %>%
+  filter(meeting_region == "P", run_result_position_finish == 1) %>%
+  nrow()
+
+percentage_favorite_wins <- (provincial_favorite_wins / total_provincial_races) * 100
+
+cat("Number of Provincial races where the favorite won:", provincial_favorite_wins, "\n")
+cat("Total number of Provincial races:", total_provincial_races, "\n")
+cat("Percentage of favorite wins in Provincial races:", percentage_favorite_wins, "%\n")
+
+```
+
+
+### 3.	For all Metropolitan races how often did the favourite win.
+
+```{r,echo=FALSE}
+
+total_metropolitan_races <- horse_race_data_cleaned21 %>%
+  filter(meeting_region == "M",run_result_favourite == "true") %>%
+  nrow()
+
+metropolitan_favorite_wins <- horse_race_data_cleaned21 %>%
+  filter(meeting_region == "M",run_result_position_finish == 1) %>%
+  nrow()
+
+percentage_favorite_wins_metropolitan <- (metropolitan_favorite_wins / total_metropolitan_races) * 100
+
+cat("Number of Metropolitan races where the favorite won:", metropolitan_favorite_wins, "\n")
+cat("Total number of Metropolitan races:", total_metropolitan_races, "\n")
+cat("Percentage of favorite wins in Metropolitan races:", percentage_favorite_wins_metropolitan, "%\n")
+
+```
+
+### 4.	For “track_code” we also want to know how often did the favourite win. 
+
+
+```{r,echo=FALSE}
+
+
+total_track_races <- horse_race_data_cleaned21 %>%
+  filter(!is.na(track_code_3)) %>% 
+  nrow()
+
+track_favorite_wins <- horse_race_data_cleaned21 %>%  group_by(track_code_3) %>%
+  filter(!is.na(track_code_3), run_result_position_finish == 1) %>%
+  nrow()
+
+percentage_favorite_wins_track <- (track_favorite_wins / total_track_races) * 100
+
+cat("Number of races where the favorite won based on track_code:", track_favorite_wins, "\n")
+cat("Total number of races based on track_code:", total_track_races, "\n")
+cat("Percentage of favorite wins based on track_code overall:", percentage_favorite_wins_track, "%\n")
+
+
+
+track_favorite_win <- horse_race_data_cleaned21 %>%
+  group_by(track_code_3) %>%
+  summarise(
+    total_races=n(),
+    win_count = sum(run_result_position_finish == 1),
+    win_rate = (win_count / total_races) * 100
+  )
+# Print the result
+head(track_favorite_win)
+write.csv(track_favorite_win,"track_favorite_win2021.csv")
+
+```
+
+
+
+### 5.	For all Country races how often did the favourite fail to win.
+
+```{r,echo=FALSE}
+
+
+total_country_races <- horse_race_data_cleaned21 %>%
+  filter(meeting_region == "C") %>%
+  nrow()
+
+country_favorite_failures <- horse_race_data_cleaned21 %>%
+  filter(meeting_region == "C",run_result_position_finish !=1) %>%
+  nrow()
+
+percentage_favorite_failures <- (country_favorite_failures / total_country_races) * 100
+
+cat("Number of Country races where the favorite failed to win:", country_favorite_failures, "\n")
+cat("Total number of Country races:", total_country_races, "\n")
+cat("Percentage of favorite failures to win in Country races:", percentage_favorite_failures, "%\n")
+
+```
+
+### 6.	For all Provincial races how often did the favourite fail to win.
+
+
+```{r,echo=FALSE}
+total_provincial_races <- horse_race_data_cleaned21 %>%
+  filter(meeting_region == "P") %>%
+  nrow()
+
+provincial_favorite_failures <- horse_race_data_cleaned21 %>%
+  filter(meeting_region == "P", run_result_favourite == "true" & run_result_position_finish != 1) %>%
+  nrow()
+
+percentage_favorite_failures_provincial <- (provincial_favorite_failures / total_provincial_races) * 100
+
+cat("Number of Provincial races where the favorite failed to win:", provincial_favorite_failures, "\n")
+cat("Total number of Provincial races:", total_provincial_races, "\n")
+cat("Percentage of favorite failures to win in Provincial races:", percentage_favorite_failures_provincial, "%\n")
+
+
+```
+
+
+#### 7.	For all Metropolitan races how often did the favourite fail to win.
+```{r,echo=FALSE}
+library(dplyr)
+total_metropolitan_races <- horse_race_data_cleaned21 %>%
+  filter(meeting_region == "M") %>%
+  nrow()
+
+metropolitan_favorite_failures <- horse_race_data_cleaned21 %>%
+  filter(meeting_region == "M", run_result_favourite == "true",run_result_position_finish != 1) %>%
+  nrow()
+
+percentage_favorite_failures_metropolitan <- (metropolitan_favorite_failures / total_metropolitan_races) * 100
+
+cat("Number of Metropolitan races where the favorite failed to win:", metropolitan_favorite_failures, "\n")
+cat("Total number of Metropolitan races:", total_metropolitan_races, "\n")
+cat("Percentage of favorite failures to win in Metropolitan races:", percentage_favorite_failures_metropolitan, "%\n")
+
+
+```
+
+
+### 8.	For “track_code” we also want to know how often did the favourite fail to win.
+
+
+```{r,echo=FALSE}
+
+total_track_races <- horse_race_data_cleaned21 %>%
+  filter(!is.na(track_code_3)) %>% 
+  nrow()
+
+track_favorite_fails <- horse_race_data_cleaned21 %>%  group_by(track_code_3) %>%
+  filter(!is.na(track_code_3), run_result_position_finish != 1) %>%
+  nrow()
+
+percentage_favorite_fails_track <- (track_favorite_fails / total_track_races) * 100
+
+cat("Number of races where the favorite failed based on track_code:", track_favorite_fails, "\n")
+cat("Total number of races based on track_code:", total_track_races, "\n")
+cat("Percentage of favorite fails based on track_code overall:", percentage_favorite_fails_track, "%\n")
+
+
+track_favorite_failures <- horse_race_data_cleaned21 %>%
+  group_by(track_code_3) %>%
+  summarise(
+    total_races=n(),
+    fail_count = sum(run_result_favourite == "true" & run_result_position_finish != 1),
+    fail_rate = (fail_count / total_races) * 100
+  )
+# Print the result
+head(track_favorite_failures)
+write.csv(track_favorite_failures,"track_favorite_failures2021.csv")
+
+
+```
+
+
+### 9.	For all Country races what was the average win price. 
+
+```{r,echo=FALSE}
+# Filter data for Country races
+average_win_price_country <- horse_race_data_cleaned21 %>%
+  filter(meeting_region == "C", run_result_position_finish == 1, !is.na(tab_nsw_win_final)) %>%
+  summarise(average_win_price = mean(tab_nsw_win_final, na.rm = TRUE))
+
+cat("Average win price for all Country races:$", average_win_price_country$average_win_price, "\n")
+
+
+```
+
+### 10.	For all Provincial races what was the average win price.
+```{r,echo=FALSE}
+
+average_win_price_provincial <- horse_race_data_cleaned21 %>%
+  filter(meeting_region == "P", run_result_position_finish == 1,!is.na(tab_nsw_win_final)) %>%
+  summarise(avg_win_price = mean(tab_nsw_win_final, na.rm = TRUE))
+
+cat("Average win price for all Provincial races where the favorite won:$", average_win_price_provincial$avg_win_price, "\n")
+
+```
+
+
+
+### 11.	For all Metropolitan races what was the average win price.
+
+```{r,echo=FALSE}
+# Filter data for Metropolitan races
+average_win_price_metropolitan <- horse_race_data_cleaned21 %>%
+  filter(meeting_region == "M", run_result_position_finish == 1, !is.na(tab_nsw_win_final)) %>%
+  summarise(average_win_price = mean(tab_nsw_win_final, na.rm = TRUE))
+
+cat("Average win price for all Metropolitan races: $", average_win_price_metropolitan$average_win_price, "\n")
+
+
+```
+
+
+
+
+### 12.	For “track_code” what was the average win price.
+
+```{r,echo=FALSE}
+# Calculate the average win price for each track_code
+library(dplyr)
+
+average_win_price_by_track <- horse_race_data_cleaned21 %>% na.omit(horse_race_data_cleaned21)%>%
+  filter( run_result_position_finish == 1) %>%
+  group_by(track_code_3) %>%
+  summarise(avg_win_price = mean(tab_nsw_win_final, na.rm = TRUE))
+
+print(average_win_price_by_track)
+
+
+
+```
+
+
+### 13.	For all Country races how often did the favourite run a place.
+
+
+```{r,echo=FALSE}
+# Calculate the frequency of the favorite running a place in Country races
+country_favorite_place_frequency <- country_data %>%
+  filter(run_result_position_finish %in% c(1,2,3)) %>%
+  summarise(favorite_place_count = n())
+
+total_country_races <- nrow(country_data)
+
+
+favorite_place_percentage <- country_favorite_place_frequency$favorite_place_count / total_country_races * 100
+
+cat("Number of times the favorite ran a place in Country races:", country_favorite_place_frequency$favorite_place_count, "\n")
+cat("Percentage of races where the favorite ran a place in Country races:", favorite_place_percentage, "%\n")
+
+
+```
+
+
+### 14.	For all Provincial races how often did the favourite run a place.
+
+
+
+```{r,echo=FALSE}
+# Calculate the frequency of the favorite running a place in Provincial races
+
+provincial_favorite_place_frequency <- provincial_data %>%
+  filter(run_result_position_finish %in% c(1,2, 3)) %>%
+  summarise(favorite_place_count = n())
+
+total_provincial_races <- nrow(provincial_data)
+
+favorite_place_percentage <- provincial_favorite_place_frequency$favorite_place_count / total_provincial_races * 100
+
+cat("Number of times the favorite ran a place in provincail races:", provincial_favorite_place_frequency$favorite_place_count, "\n")
+cat("Percentage of races where the favorite ran a place in Country races:", favorite_place_percentage, "%\n")
+
+```
+
+### 15.	For all Metropolitan races how often did the favourite run a place.
+
+
+```{r,echo=FALSE}
+# Calculate the frequency of the favorite running a place in Metropolitan races
+
+
+metropolitan_favorite_place_frequency <- metropolitan_data %>%
+  filter(run_result_position_finish %in% c(1,2,3)) %>%
+  summarise(favorite_place_count = n())
+
+total_metropolitan_races <- nrow(metropolitan_data)
+
+favorite_place_percentage <- metropolitan_favorite_place_frequency$favorite_place_count / total_metropolitan_races * 100
+
+cat("Number of times the favorite ran a place in metropolitan races:", metropolitan_favorite_place_frequency$favorite_place_count, "\n")
+cat("Percentage of races where the favorite ran a place in Country races  (second and third favorite horse win):", favorite_place_percentage,"%\n")
+
+
+```
+
+
+
+### 16.	For “track_code” how often did the favourite run a place.
+
+```{r,echo=FALSE}
+library(dplyr)
+
+track_favorite_place_frequency <-horse_race_data_cleaned21 %>%
+  group_by(track_code_3) %>%
+  summarise(
+    total_races=n(),
+    favorite_place_count = sum(run_result_position_finish %in% c(1,2, 3)),
+    favorite_place_rate = ( favorite_place_count / total_races) * 100
+  )
+
+
+head(track_favorite_place_frequency)
+
+
+write.csv(track_favorite_place_frequency,"track_favorite_place_frequency2021.csv")
+
+
+```
+
+### 17.	For all Country races how often did the favourite fail to run a place.
+
+
+
+```{r,echo=FALSE}
+# To determine how often the favorite failed to run a place (i.e., finished outside the top 3) in Country races
+# Dataset is named horse_race_data_cleaned21 and meeting_region is the column representing the meeting region
+country_favorite_fail_place_frequency <- horse_race_data_cleaned21 %>%
+  filter(meeting_region == "C", run_result_position_finish > 3 | is.na(run_result_position_finish)) %>%
+  summarise(favorite_fail_place_count = n())
+
+total_country_races <- nrow(country_data)
+
+country_favorite_fail_place_frequency <- country_favorite_fail_place_frequency %>%
+  mutate(favorite_fail_place_percentage = (favorite_fail_place_count / total_country_races) * 100)
+
+# Print the results using cat
+cat("Favorite Fail to Run a Place in Country Races:\n")
+cat("Count of country favorite fails:", country_favorite_fail_place_frequency$favorite_fail_place_count, "\n")
+cat("total_country_races:", total_country_races, "\n")
+cat("Percentage:", country_favorite_fail_place_frequency$favorite_fail_place_percentage, "%\n")
+
+```
+### 18.	For all Provincial races how often did the favourite fail to run a place.
+```{r,echo=FALSE}
+
+
+
+
+# To determine how often the favorite failed to run a place (finished outside the top 3) in Provincial races
+# Dataset is named horse_race_data_cleaned21, and meeting_region is the column representing the meeting region
+provincial_favorite_fail_place_frequency <- horse_race_data_cleaned21 %>%
+  filter( meeting_region == "P" & run_result_position_finish > 3 | is.na(run_result_position_finish)) %>%
+  summarise(favorite_fail_place_count = n())
+
+total_provincial_races <- nrow(provincial_data)
+
+provincial_favorite_fail_place_frequency <- provincial_favorite_fail_place_frequency %>%
+  mutate(favorite_fail_place_percentage = (favorite_fail_place_count / total_provincial_races) * 100)
+
+# Print the results using cat
+cat("Favorite Fail to Run a Place in Provincial Races:\n")
+cat("Count of provincial favourite fails:", provincial_favorite_fail_place_frequency$favorite_fail_place_count, "\n")
+cat("Total provincial races:", total_provincial_races, "\n")
+cat("Percentage:", provincial_favorite_fail_place_frequency$favorite_fail_place_percentage, "%\n")
+
+
+```
+
+### 19.	For all Metropolitan races how often did the favourite fail to run a place.
+```{r,echo=FALSE}
+# To determine how often the favorite failed to run a place (finished outside the top 3) in Metropolitan races
+# Dataset is named horse_race_data_cleaned21, and meeting_region is the column representing the meeting region
+metropolitan_favorite_fail_place_frequency <- horse_race_data_cleaned21 %>%
+  filter(run_result_favourite == "true", meeting_region == "M", run_result_position_finish > 3 | is.na(run_result_position_finish)) %>%
+  summarise(favorite_fail_place_count = n())
+
+total_metropolitan_races <- nrow(metropolitan_data)
+
+metropolitan_favorite_fail_place_frequency <- metropolitan_favorite_fail_place_frequency %>%
+  mutate(favorite_fail_place_percentage = (favorite_fail_place_count / total_metropolitan_races) * 100)
+
+# Print the results using cat
+cat("Favorite Fail to Run a Place in Metropolitan Races:\n")
+cat("Count of Metropolitan favourite fails:", metropolitan_favorite_fail_place_frequency$favorite_fail_place_count, "\n")
+cat("Total Metropolitan races:", total_metropolitan_races, "\n")
+cat("Percentage:", metropolitan_favorite_fail_place_frequency$favorite_fail_place_percentage, "%\n")
+
+print(metropolitan_favorite_fail_place_frequency)
+
+
+```
+
+
+### 20.	For “track_code” how often did the favourite fail to run a place.
+
+```{r,echo=FALSE}
+# Calculate the frequency of the favorite failing to run a place for each track_code
+# To determine how often the favorite failed to run a place (finished outside the top 3) for each "track_code"
+# Dataset is named horse_race_data_cleaned21, and track_code_3 represents the first three characters of the track code
+track_favorite_fail_place_frequency <- horse_race_data_cleaned21 %>%
+  filter(run_result_favourite == "true", run_result_position_finish > 3 | is.na(run_result_position_finish)) %>%
+  group_by(track_code_3) %>%
+  summarise(favorite_fail_place_count = n())
+
+# Total races per track
+total_races_per_track <- horse_race_data_cleaned21 %>%
+  group_by(track_code_3) %>%
+  summarise(total_races = n())
+
+# Merge the two data frames to calculate the percentage
+track_favorite_fail_place_frequency <- merge( total_races_per_track,track_favorite_fail_place_frequency, by = "track_code_3")
+track_favorite_fail_place_frequency <- track_favorite_fail_place_frequency %>%
+  mutate(favorite_fail_place_percentage = (favorite_fail_place_count / total_races) * 100)
+
+# Print the results
+head(track_favorite_fail_place_frequency)
+
+write.csv(track_favorite_fail_place_frequency,"track_favorite_fail_place_frequency2021.csv")
+
+```
+
+
+### 21.	For all Country races what was the average place price, when the favourite placed and paid a dividend.
+
+
+```{r,echo=FALSE}
+# Filter the data for Country races where the favorite placed and paid a dividend
+country_favorite_place_paid <- horse_race_data_cleaned21 %>%
+  filter(meeting_region == "C", run_result_position_finish %in% c(1,2, 3),race_result_starters >= 8,
+         !is.na(tab_nsw_plc_final))
+
+# Calculate the average place price
+average_place_price_country <- country_favorite_place_paid %>%
+  summarise(average_place_price = mean(tab_nsw_plc_final, na.rm = TRUE))
+
+# Print the result
+print(average_place_price_country)
+
+
+# Print the result using cat
+cat("For all Country races where the favorite placed and paid a dividend:\n")
+cat("Average Place Price: $", average_place_price_country$average_place_price, "\n")
+
+```
+
+
+
+### 22.	For all Provincial what was the average place price, when the favourite placed and paid a dividend.
+
+
+```{r,echo=FALSE}
+
+# Filter the data for Provincial races where the favorite placed and paid a dividend
+provincial_favorite_place_paid <- horse_race_data_cleaned21 %>%
+  filter(meeting_region == "P", run_result_favourite == "true", run_result_position_finish %in% c(1,2, 3),race_result_starters >= 8,
+         !is.na(tab_nsw_plc_final))
+
+# Calculate the average place price
+average_place_price_provincial <- provincial_favorite_place_paid %>%
+  summarise(average_place_price = mean(tab_nsw_plc_final, na.rm = TRUE))
+
+# Print the result using cat
+cat("For all Provincial races where the favorite placed and paid a dividend:\n")
+cat("Average Place Price: $", average_place_price_provincial$average_place_price, "\n")
+
+
+# Print the result
+#print(average_place_price_provincial)
+
+
+
+```
+### 23.	For all Metropolitan what was the average place price, when the favourite placed and paid a dividend.
+```{r,echo=FALSE}
+# Filter the data for Metropolitan races where the favorite placed and paid a dividend
+metropolitan_favorite_place_paid <- horse_race_data_cleaned21 %>%
+  filter(meeting_region == "M", run_result_favourite == "true", run_result_position_finish %in% c(1,2, 3),race_result_starters >= 8,
+         !is.na(tab_nsw_plc_final))
+
+# Calculate the average place price
+average_place_price_metropolitan <- metropolitan_favorite_place_paid %>%
+  summarise(average_place_price = mean(tab_nsw_plc_final, na.rm = TRUE))
+
+# Print the result using cat
+cat("For all Metropolitan races where the favorite placed and paid a dividend:\n")
+cat("Average Place Price: $", average_place_price_metropolitan$average_place_price, "\n")
+
+```
+
+### 24.	For all Country races that the favourite won, was there any commonalities between “race_distance”, “condition_age”, “condition_class”, “race_result_going”
+
+```{r,echo=FALSE}
+# Filter Country races where the favorite won
+country_favorite_win <- horse_race_data_cleaned21 %>%
+  filter(meeting_region == "C" & run_result_favourite == "true" & run_result_position_finish == 1)
+
+# Extract relevant columns
+country_favorite_win=country_favorite_win %>% dplyr::select(race_distance,condition_age,condition_class,race_result_going)
+
+
+# Convert categorical variables to factors for analysis
+country_favorite_win$condition_age <- as.factor(country_favorite_win$condition_age)
+country_favorite_win$condition_class <- as.factor(country_favorite_win$condition_class)
+country_favorite_win$race_result_going <- as.factor(country_favorite_win$race_result_going)
+
+# Display summary statistics
+summary(country_favorite_win)
+
+
+
+# Create frequency tables for categorical variables
+tab1(country_favorite_win$condition_age)
+
+#table(country_favorite_win$race_result_going)
+
+tab1(country_favorite_win$race_result_going)
+
+
+```
+
+#### Analyze condition_class for favorite winners
+```{r,echo=FALSE}
+condition_class_analysis <- horse_race_data_cleaned21 %>%
+  group_by(condition_class) %>% filter(meeting_region == "C") %>%
+  summarise(
+    total_races=n(),
+      number_of_wins = sum(run_result_position_finish == 1),
+    win_rate=(number_of_wins/total_races)*100)
+
+# Print the result
+head(condition_class_analysis)
+```
+
+#### Analyze condition_age_distance for favorite winners
+```{r,echo=FALSE}
+condition_age_analysis <- horse_race_data_cleaned21 %>%
+  group_by(condition_age) %>% filter(meeting_region == "C")%>%
+  summarise(
+    total_races=n(),
+      number_of_wins = sum(run_result_position_finish == 1),
+    win_rate=(number_of_wins/total_races)*100)
+
+# Print the result
+print(condition_age_analysis)
+```
+
+#### Analyze race_result_going for favorite winners
+```{r,echo=FALSE}
+# Analyze race_result_going for favorite winners
+race_result_going_analysis <- horse_race_data_cleaned21 %>%
+  group_by(race_result_going) %>% filter(meeting_region == "C") %>%
+  summarise(
+    total_races=n(),
+      number_of_wins = sum(run_result_position_finish == 1),
+    win_rate=(number_of_wins/total_races)*100)
+
+# Print the result
+print(race_result_going_analysis)
+```
+
+#### This table shows how often the favourite wins over the distance. Note the tracks were grouped to their nearest 100 meters. EG If the race was 820m, it would be grouped together as an 800m.
+```{r,echo=FALSE}
+library(dplyr)
+
+# Filter for Country races where the favorite won
+country_favorite_winners <- horse_race_data_cleaned21 %>%
+  filter(meeting_region == "C", run_result_favourite == "true", run_result_position_finish == 1)
+# Group race distances to their nearest 100 meters
+horse_race_data_cleaned21 <- horse_race_data_cleaned21 %>%
+  mutate(Race_distance = round(race_distance, -2))
+
+# Analyze race_distance for favorite winners
+distance_analysis <- horse_race_data_cleaned21 %>%
+  group_by(Race_distance) %>% filter(meeting_region == "C") %>%
+  summarise(
+    total_races=n(),
+      number_of_wins = sum(run_result_position_finish == 1),
+    win_rate=(number_of_wins/total_races)*100)
+
+# Print the result
+print(distance_analysis)
+```
+
+### 25.	For all Provincial races that the favourite won, was there any commonalities between “race_distance”, “condition_age”, “condition_class”, “race_result_going”
+```{r,echo=FALSE}
+# Filter Provincial races where the favorite won
+provincial_favorite_win <- horse_race_data_cleaned21 %>%
+  filter(meeting_region == "P" & run_result_favourite == "true" & run_result_position_finish == 1)
+
+# Extract relevant columns
+provincial_favorite_win <- provincial_favorite_win %>%
+  dplyr::select(race_distance, condition_age, condition_class, race_result_going)
+
+write.csv(provincial_favorite_win, "provincial_favorite_win_subset.csv")
+# Convert categorical variables to factors for analysis
+provincial_favorite_win$condition_age <- as.factor(provincial_favorite_win$condition_age)
+provincial_favorite_win$condition_class <- as.factor(provincial_favorite_win$condition_class)
+provincial_favorite_win$race_result_going <- as.factor(provincial_favorite_win$race_result_going)
+
+# Display summary statistics
+summary(provincial_favorite_win)
+horse_race_data_cleaned21=na.omit(horse_race_data_cleaned21)
+
+
+```
+
+#### Analyze condition_class for favorite winners
+```{r,echo=FALSE}
+condition_class_analysis <- horse_race_data_cleaned21 %>%
+  group_by(condition_class) %>% filter(meeting_region == "P") %>%
+  summarise(
+    total_races=n(),
+      number_of_wins = sum(run_result_position_finish == 1),
+    win_rate=(number_of_wins/total_races)*100)
+
+# Print the result
+head(condition_class_analysis)
+```
+
+#### Analyze condition_age_distance for favorite winners
+```{r,echo=FALSE}
+
+condition_age_analysis <- horse_race_data_cleaned21 %>%
+  group_by(condition_age) %>% filter(meeting_region == "P")%>%
+  summarise(
+    total_races=n(),
+      number_of_wins = sum(run_result_position_finish == 1),
+    win_rate=(number_of_wins/total_races)*100)
+
+# Print the result
+print(condition_age_analysis)
+```
+
+#### Analyze race_result_going for favorite winners
+```{r,echo=FALSE}
+# Analyze race_result_going for favorite winners
+race_result_going_analysis <- horse_race_data_cleaned21 %>%
+  group_by(race_result_going) %>% filter(meeting_region == "P") %>%
+  summarise(
+    total_races=n(),
+      number_of_wins = sum(run_result_position_finish == 1),
+    win_rate=(number_of_wins/total_races)*100)
+
+# Print the result
+print(race_result_going_analysis)
+```
+
+#### This table shows how often the favourite wins over the distance. Note the tracks were grouped to their nearest 100 meters. EG If the race was 820m, it would be grouped together as an 800m.
+```{r,echo=FALSE}
+library(dplyr)
+# Group race distances to their nearest 100 meters
+horse_race_data_cleaned21 <- horse_race_data_cleaned21 %>%
+  mutate(Race_distance = round(race_distance, -2))
+
+# Analyze race_distance for favorite winners
+distance_analysis <- horse_race_data_cleaned21 %>%
+  group_by(Race_distance) %>% filter(meeting_region == "P") %>%
+  summarise(
+    total_races=n(),
+      number_of_wins = sum(run_result_position_finish == 1),
+    win_rate=(number_of_wins/total_races)*100)
+
+# Print the result
+print(distance_analysis)
+
+```
+
+
+
+
+### 26.	For all Metropolitan races that the favourite won, was there any commonalities between “race_distance”, “condition_age”, “condition_class”, “race_result_going”
+```{r,echo=FALSE}
+# Filter Provincial races where the favorite won
+metropolitan_favorite_win <- horse_race_data_cleaned21 %>%
+  filter(meeting_region == "P" & run_result_favourite == "true" & run_result_position_finish == 1)
+
+# Extract relevant columns
+metropolitan_favorite_win <- metropolitan_favorite_win %>%
+  dplyr::select(race_distance, condition_age, condition_class, race_result_going)
+
+write.csv(metropolitan_favorite_win, "metropolitan_favorite_win_subset.csv")
+# Convert categorical variables to factors for analysis
+metropolitan_favorite_win$condition_age <- as.factor(metropolitan_favorite_win$condition_age)
+metropolitan_favorite_win$condition_class <- as.factor(metropolitan_favorite_win$condition_class)
+metropolitan_favorite_win$race_result_going <- as.factor(metropolitan_favorite_win$race_result_going)
+
+# Display summary statistics
+summary(metropolitan_favorite_win)
+
+
+
+# Create frequency tables for categorical variables
+table(metropolitan_favorite_win$condition_age)
+#table(metropolitan_favorite_win$condition_class)
+table(metropolitan_favorite_win$race_result_going)
+```
+
+#### Analyze condition_class for favorite winners
+```{r,echo=FALSE}
+condition_class_analysis <- horse_race_data_cleaned21 %>%
+  group_by(condition_class) %>% filter(meeting_region == "M") %>%
+  summarise(
+    total_races=n(),
+      number_of_wins = sum(run_result_position_finish == 1),
+    win_rate=(number_of_wins/total_races)*100)
+
+# Print the result
+head(condition_class_analysis)
+```
+
+#### Analyze condition_age_distance for favorite winners
+```{r,echo=FALSE}
+
+condition_age_analysis <- horse_race_data_cleaned21 %>%
+  group_by(condition_age) %>% filter(meeting_region == "M")%>%
+  summarise(
+    total_races=n(),
+      number_of_wins = sum(run_result_position_finish == 1),
+    win_rate=(number_of_wins/total_races)*100)
+
+# Print the result
+print(condition_age_analysis)
+```
+
+#### Analyze race_result_going for favorite winners
+```{r,echo=FALSE}
+# Analyze race_result_going for favorite winners
+race_result_going_analysis <- horse_race_data_cleaned21 %>%
+  group_by(race_result_going) %>% filter(meeting_region == "M") %>%
+  summarise(
+    total_races=n(),
+      number_of_wins = sum(run_result_position_finish == 1),
+    win_rate=(number_of_wins/total_races)*100)
+
+# Print the result
+print(race_result_going_analysis)
+```
+
+#### This table shows how often the favourite wins over the distance. Note the tracks were grouped to their nearest 100 meters. EG If the race was 820m, it would be grouped together as an 800m.
+```{r,echo=FALSE}
+library(dplyr)
+horse_race_data_cleaned21 <- horse_race_data_cleaned21 %>%
+  mutate(Race_distance = round(race_distance, -2))
+
+# Analyze race_distance for favorite winners
+distance_analysis <- horse_race_data_cleaned21 %>%
+  group_by(Race_distance) %>% filter(meeting_region == "M") %>%
+  summarise(
+    total_races=n(),
+      number_of_wins = sum(run_result_position_finish == 1),
+    win_rate=(number_of_wins/total_races)*100)
+
+# Print the result
+print(distance_analysis)
+
+```
+
+
+
+### 27.	For all Country races that the favourite placed and paid a dividend, was there any commonalities between “race_distance”, 
+##“condition_age”, “condition_class”, “race_result_going”
+
+
+```{r,echo=FALSE}
+
+# Filter Country races where the favorite placed and paid a dividend
+country_favorite_place_dividend <- horse_race_data_cleaned21%>%
+  filter(
+    meeting_region == "C" &
+      run_result_favourite == "true" &
+      run_result_position_finish %in% c(1,2, 3) &
+      race_result_starters >= 8
+  )
+
+# Extract relevant columns
+country_commonalities_place_dividend <- country_favorite_place_dividend %>%
+  dplyr::select(race_distance, condition_age, condition_class, race_result_going)
+
+# Convert categorical variables to factors for analysis
+country_commonalities_place_dividend$condition_age <- as.factor(country_commonalities_place_dividend$condition_age)
+country_commonalities_place_dividend$condition_class <- as.factor(country_commonalities_place_dividend$condition_class)
+country_commonalities_place_dividend$race_result_going <- as.factor(country_commonalities_place_dividend$race_result_going)
+
+# Display summary statistics
+summary(country_commonalities_place_dividend)
+
+
+
+
+
+
+
+
+```
+
+#### Analyze condition_class for favorite winners
+```{r,echo=FALSE}
+condition_class_analysis <- horse_race_data_cleaned21 %>%
+  group_by(condition_class) %>% filter(meeting_region == "C") %>%
+  summarise(
+    total_races=n(),
+      number_of_places = sum(run_result_position_finish %in% c(1,2, 3) &
+      race_result_starters >= 8),
+    win_rate=(number_of_places/total_races)*100)
+
+# Print the result
+head(condition_class_analysis)
+```
+
+#### Analyze condition_age_distance for favorite winners
+```{r,echo=FALSE}
+
+condition_age_analysis <- horse_race_data_cleaned21 %>%
+  group_by(condition_age) %>% filter(meeting_region == "C")  %>%
+  summarise(
+    total_races=n(),
+      number_of_places = sum(run_result_position_finish %in% c(1,2, 3) &
+      race_result_starters >= 8),
+    win_rate=(number_of_places/total_races)*100)
+
+# Print the result
+print(condition_age_analysis)
+```
+
+#### Analyze race_result_going for favorite winners
+```{r,echo=FALSE}
+# Analyze race_result_going for favorite winners
+race_result_going_analysis <- horse_race_data_cleaned21 %>%
+  group_by(race_result_going) %>% filter(meeting_region == "P") %>%
+  summarise(
+    total_races=n(),
+      number_of_places =sum(run_result_position_finish %in% c(1,2, 3) &
+      race_result_starters >= 8),
+    win_rate=(number_of_places/total_races)*100)
+
+# Print the result
+print(race_result_going_analysis)
+```
+
+#### This table shows how often the favourite wins over the distance. Note the tracks were grouped to their nearest 100 meters. EG If the race was 820m, it would be grouped together as an 800m.
+```{r,echo=FALSE}
+library(dplyr)
+
+# Group race distances to their nearest 100 meters
+horse_race_data_cleaned21 <- horse_race_data_cleaned21 %>%
+  mutate(Race_distance = round(race_distance, -2))
+
+# Analyze race_distance for favorite winners
+distance_analysis <- horse_race_data_cleaned21 %>%
+  group_by(Race_distance) %>% filter(meeting_region == "C") %>%
+  summarise(
+    total_races=n(),
+      number_of_places= sum(run_result_position_finish %in% c(1,2, 3) &
+      race_result_starters >= 8),
+    win_rate=(number_of_places/total_races)*100)
+
+# Print the result
+print(distance_analysis)
+
+```
+
+
+### 28.	For all Provincial races that the favourite placed and paid a dividend, was there any commonalities between “race_distance”, “condition_age”, 
+#“condition_class”, “race_result_going”
+
+```{r,echo=FALSE}
+
+# Filter Provincial races where the favorite placed and paid a dividend
+provincial_favorite_place_dividend <- horse_race_data_cleaned21%>%
+  filter(
+    meeting_region == "P" &
+      run_result_favourite == "true" &
+      run_result_position_finish %in% c(1,2, 3) &
+      race_result_starters >= 5
+  )
+
+# Extract relevant columns
+provincial_commonalities_place_dividend <- provincial_favorite_place_dividend %>%
+  dplyr::select(race_distance, condition_age, condition_class, race_result_going)
+head(provincial_commonalities_place_dividend )
+
+# Convert categorical variables to factors for analysis
+provincial_commonalities_place_dividend$condition_age <- as.factor(provincial_commonalities_place_dividend$condition_age)
+provincial_commonalities_place_dividend$condition_class <- as.factor(provincial_commonalities_place_dividend$condition_class)
+provincial_commonalities_place_dividend$race_result_going <- as.factor(provincial_commonalities_place_dividend$race_result_going)
+
+# Display summary statistics
+summary(provincial_commonalities_place_dividend)
+
+
+```
+#### Analyze condition_class for favorite winners
+```{r,echo=FALSE}
+condition_class_analysis <- horse_race_data_cleaned21 %>%
+  group_by(condition_class) %>% filter(meeting_region == "P") %>%
+  summarise(
+    total_races=n(),
+      number_of_places = sum(run_result_position_finish %in% c(1,2, 3) &
+      race_result_starters >= 8),
+    win_rate=(number_of_places/total_races)*100)
+
+# Print the result
+head(condition_class_analysis)
+```
+
+#### Analyze condition_age_distance for favorite winners
+```{r,echo=FALSE}
+
+condition_age_analysis <- horse_race_data_cleaned21 %>%
+  group_by(condition_age) %>% filter(meeting_region == "P")  %>%
+  summarise(
+    total_races=n(),
+      number_of_places = sum(run_result_position_finish %in% c(1,2, 3) &
+      race_result_starters >= 8),
+    win_rate=(number_of_places/total_races)*100)
+
+# Print the result
+print(condition_age_analysis)
+```
+
+#### Analyze race_result_going for favorite winners
+```{r,echo=FALSE}
+# Analyze race_result_going for favorite winners
+race_result_going_analysis <- horse_race_data_cleaned21 %>%
+  group_by(race_result_going) %>% filter(meeting_region == "P") %>%
+  summarise(
+    total_races=n(),
+      number_of_places =sum(run_result_position_finish %in% c(1,2, 3) &
+      race_result_starters >= 8),
+    win_rate=(number_of_places/total_races)*100)
+
+# Print the result
+print(race_result_going_analysis)
+```
+
+#### This table shows how often the favourite wins over the distance. Note the tracks were grouped to their nearest 100 meters. EG If the race was 820m, it would be grouped together as an 800m.
+```{r,echo=FALSE}
+library(dplyr)
+
+# Group race distances to their nearest 100 meters
+horse_race_data_cleaned21 <- horse_race_data_cleaned21 %>%
+  mutate(Race_distance = round(race_distance, -2))
+
+# Analyze race_distance for favorite winners
+distance_analysis <- horse_race_data_cleaned21 %>%
+  group_by(Race_distance) %>% filter(meeting_region == "P") %>%
+  summarise(
+    total_races=n(),
+      number_of_places= sum(run_result_position_finish %in% c(1,2, 3) &
+      race_result_starters >= 8),
+    win_rate=(number_of_places/total_races)*100)
+
+# Print the result
+print(distance_analysis)
+
+```
+### 29.	For all Metropolitan races that the favourite placed and paid a dividend, was there any commonalities between “race_distance”, “condition_age”, “condition_class”, “race_result_going”
+
+
+
+```{r,echo=FALSE}
+
+# Filter metropolitan races where the favorite placed and paid a dividend
+metropolitan_favorite_place_dividend <- horse_race_data_cleaned21%>%
+  filter(
+    meeting_region == "M" &
+      run_result_favourite == "true" &
+      run_result_position_finish %in% c(1,2, 3) &
+      race_result_starters >= 5
+  )
+
+# Extract relevant columns
+metropolitan_commonalities_place_dividend <- metropolitan_favorite_place_dividend %>%
+  dplyr::select(race_distance, condition_age, condition_class, race_result_going)
+head(metropolitan_commonalities_place_dividend )
+
+# Convert categorical variables to factors for analysis
+metropolitan_commonalities_place_dividend$condition_age <- as.factor(metropolitan_commonalities_place_dividend$condition_age)
+metropolitan_commonalities_place_dividend$condition_class <- as.factor(metropolitan_commonalities_place_dividend$condition_class)
+metropolitan_commonalities_place_dividend$race_result_going <- as.factor(metropolitan_commonalities_place_dividend$race_result_going)
+
+# Display summary statistics
+summary(metropolitan_commonalities_place_dividend)
+
+# Create frequency tables for categorical variables
+table(metropolitan_commonalities_place_dividend$condition_age)
+#table(metropolitan_commonalities_place_dividend$condition_class)
+table(metropolitan_commonalities_place_dividend$race_result_going)
+```
+#### Analyze condition_class for favorite winners
+```{r,echo=FALSE}
+condition_class_analysis <- horse_race_data_cleaned21 %>%
+  group_by(condition_class) %>% filter(meeting_region == "M") %>%
+  summarise(
+    total_races=n(),
+      number_of_places = sum(run_result_position_finish %in% c(1,2, 3) &
+      race_result_starters >= 8),
+    win_rate=(number_of_places/total_races)*100)
+
+# Print the result
+head(condition_class_analysis)
+```
+
+#### Analyze condition_age_distance for favorite winners
+```{r,echo=FALSE}
+
+condition_age_analysis <- horse_race_data_cleaned21 %>%
+  group_by(condition_age) %>% filter(meeting_region == "M")  %>%
+  summarise(
+    total_races=n(),
+      number_of_places = sum(run_result_position_finish %in% c(1,2, 3) &
+      race_result_starters >= 8),
+    win_rate=(number_of_places/total_races)*100)
+
+# Print the result
+print(condition_age_analysis)
+```
+
+#### Analyze race_result_going for favorite winners
+```{r,echo=FALSE}
+# Analyze race_result_going for favorite winners
+race_result_going_analysis <- horse_race_data_cleaned21 %>%
+  group_by(race_result_going) %>% filter(meeting_region == "M") %>%
+  summarise(
+    total_races=n(),
+      number_of_places =sum(run_result_position_finish %in% c(1,2, 3) &
+      race_result_starters >= 8),
+    win_rate=(number_of_places/total_races)*100)
+
+# Print the result
+print(race_result_going_analysis)
+```
+
+#### This table shows how often the favourite wins over the distance. Note the tracks were grouped to their nearest 100 meters. EG If the race was 820m, it would be grouped together as an 800m.
+```{r,echo=FALSE}
+library(dplyr)
+
+# Group race distances to their nearest 100 meters
+horse_race_data_cleaned21 <- horse_race_data_cleaned21 %>%
+  mutate(Race_distance = round(race_distance, -2))
+
+# Analyze race_distance for favorite winners
+distance_analysis <- horse_race_data_cleaned21 %>%
+  group_by(Race_distance) %>% filter(meeting_region == "M") %>%
+  summarise(
+    total_races=n(),
+      number_of_places= sum(run_result_position_finish %in% c(1,2, 3) &
+      race_result_starters >= 8),
+    win_rate=(number_of_places/total_races)*100)
+
+# Print the result
+head(distance_analysis)
+```
+
+## Then, Putting all “meeting_region” groups into a chronological timeline, so that they are in an order of “meeting_date” and then “race_start_time”, we want to know what the series of events are. Meaning we want to know how many times did the favourite, win or place in a row or fail to win or place in a row. 
+
+### 30.	For Country races how many times in a row did the favourite win and what was the average times in a row that the favourite won.
+
+```{r,echo=FALSE}
+
+library(lubridate)
+
+#horse_race_data_cleaned21=na.omit(horse_race_data_cleaned21)
+
+# Define a function to adjust race times based on venue state
+adjust_race_times <- function(venue_state, race_start_time) {
+  if (venue_state %in% c("WA", "NT", "SA")) {
+    return(as.character(as.POSIXct(strptime(race_start_time, "%H:%M")) + hours(2), format="%H:%M"))
+  } else {
+    return(race_start_time)
+  }
+}
+
+# Adjust race_start_time based on venue stat
+#horse_race_data_cleaned21$adjusted_race_start_time <- mapply(adjust_race_times, horse_race_data_cleaned21$venue_state, horse_race_data_cleaned21$race_start_time)
+
+
+# you have columns 'meeting_region', 'meeting_date', 'race_start_time', 'run_result_favourite', 'run_result_position_finish'
+
+# Define a function to convert race times to AEST
+convert_to_aest <- function(meeting_region, datetime) {
+  if (meeting_region == "C") {
+    # Assuming Country races are in AEDT (Australian Eastern Daylight Time)
+    return(with_tz(datetime, tzone = "Australia/Sydney"))
+  } else if (meeting_region == "P") {
+    # Assuming Provincial races are in AEDT (Australian Eastern Daylight Time)
+    return(with_tz(datetime, tzone = "Australia/Sydney"))
+  } else  if (meeting_region == "M") {
+    # Assuming Provincial races are in AEDT (Australian Eastern Daylight Time)
+    return(with_tz(datetime, tzone = "Australia/Sydney"))
+  } else {
+    # Add additional conditions for other regions if needed
+    return(datetime)
+  }
+}
+
+# Convert meeting_date and race_start_time to datetime
+horse_race_data_cleaned21$meeting_datetime <- with_tz(
+  as.POSIXct(paste(horse_race_data_cleaned21$meeting_date, horse_race_data_cleaned21$race_start_time), format="%Y-%m-%d %H:%M")
+)
+
+
+
+#you have columns 'meeting_date', 'race_aap_id', 'race_start_time', 'run_result_favourite', 'run_result_position_finish'
+
+horse_race_data_cleaned21$day_of_week <- weekdays(horse_race_data_cleaned21$meeting_datetime)
+# Sort the data by meeting_date and race_start_time
+sorted_races <- horse_race_data_cleaned21 %>%
+arrange(meeting_datetime)
+head(sorted_races)
+
+# Convert meeting_date and race_start_time to datetime
+#horse_race_data_cleaned21$meeting_datetime <- as.POSIXct(paste(horse_race_data_cleaned21$meeting_date, horse_race_data_cleaned21$race_start_time), format="%Y-%m-%d %H:%M")
+
+# Sort the data by meeting_date and race_start_time
+#sorted_races <- horse_race_data_cleaned21 %>% arrange(meeting_datetime, race_aap_id)
+head(sorted_races)
+write.csv(sorted_races,"sorted_races21.csv")
+
+```
+
+
+
+```{r,echo=FALSE}
+
+
+# Define Helper Functions
+identify_consecutive <- function(result_vector) {
+  # Implement logic to identify consecutive wins, places, fails
+  # Return a vector indicating consecutive occurrences
+}
+
+# Process Data
+horse_race_data_processed <- sorted_races %>% na.omit(sorted_races)%>%
+  group_by(meeting_region) %>%
+  arrange(meeting_date, race_start_time) %>% 
+  mutate(
+    consecutive_wins = identify_consecutive(run_result_position_finish == 1),
+    consecutive_places = identify_consecutive(run_result_position_finish %in% c(1,2, 3)),
+    consecutive_fails = identify_consecutive(run_result_position_finish >3)
+  )
+
+#head(# Process Data
+  #horse_race_data_processed)
+
+
+
+# Sort the data by meeting_region, meeting_date, and race_start_time
+horse_race_data_sorted <- sorted_races %>% na.omit(sorted_races) %>%
+  filter(meeting_region == "C") %>%
+  arrange(meeting_region, meeting_date, race_start_time)
+
+# Identify consecutive wins for each meeting_region group
+horse_race_data_sorted <- horse_race_data_sorted %>%
+  group_by(meeting_region) %>%
+  mutate(
+    consecutive_wins = with(rle(run_result_position_finish == 1), rep(lengths * values, lengths))
+  )
+
+
+
+
+# Calculate the number of times in a row the favorite won and average times in a row
+country_favorite_win_stats <- horse_race_data_sorted %>%
+  summarise(
+    max_consecutive_wins = max(consecutive_wins),
+    average_consecutive_wins = mean(consecutive_wins)
+  )
+
+# Print or visualize the results as needed
+print(country_favorite_win_stats)
+cat("Number of times in a row the favorite won in Country races:", country_favorite_win_stats$max_consecutive_wins, "\n")
+cat("Average times in a row that the favorite won in Country races:", country_favorite_win_stats$average_consecutive_wins, "\n")
+
+
+```
+
+
+### 31.	For Provincial races how many times in a row did the favourite win and what was the average times in a row that the favourite won.
+
+```{r,echo=FALSE}
+library(dplyr)
+
+# Assuming you have a column named "chronological_order" representing the order of races
+# in your dataset. Adjust column names based on your actual data structure.
+
+# Sort the data by meeting_region, meeting_date, and race_start_time
+horse_race_data_sorted <- sorted_races %>% na.omit(sorted_races)%>%
+  filter(meeting_region == "P") %>%
+  arrange(meeting_region, meeting_date, race_start_time)
+
+
+
+# Identify consecutive wins for each meeting_region group
+horse_race_data_sorted <- horse_race_data_sorted %>%
+  group_by(meeting_region) %>%
+  mutate(
+    consecutive_wins = with(rle(run_result_position_finish == 1), rep(lengths * values, lengths))
+  )
+
+
+
+
+# Calculate the number of times in a row the favorite won and average times in a row
+country_favorite_win_stats <- horse_race_data_sorted %>%
+  summarise(
+    max_consecutive_wins = max(consecutive_wins),
+    average_consecutive_wins = mean(consecutive_wins)
+  )
+
+# Print or visualize the results as needed
+print(country_favorite_win_stats)
+cat("Number of times in a row the favorite won in Country races:", country_favorite_win_stats$max_consecutive_wins, "\n")
+cat("Average times in a row that the favorite won in Country races:", country_favorite_win_stats$average_consecutive_wins, "\n")
+
+
+
+
+```
+
+######
+### 32.	For Metropolitan races how many times in a row did the favourite win and what was the average times in a row that the favourite won.  
+######p
+```{r,echo=FALSE}
+ #Filter for Metropolitan races
+# Sort the data by meeting_region, meeting_date, and race_start_time
+horse_race_data_sorted <- sorted_races %>% na.omit(sorted_races) %>%
+  filter(meeting_region == "M") %>%
+  arrange(meeting_region, meeting_date, race_start_time)
+
+# Identify consecutive wins for each meeting_region group
+horse_race_data_sorted <- horse_race_data_sorted %>%
+  group_by(meeting_region) %>%
+  mutate(
+    consecutive_wins = with(rle(run_result_position_finish == 1), rep(lengths * values, lengths))
+  )
+
+# Calculate the number of times in a row the favorite won and average times in a row
+metropolitan_favorite_win_stats <- horse_race_data_sorted %>%
+  summarise(
+    max_consecutive_wins = max(consecutive_wins),
+    average_consecutive_wins = mean(consecutive_wins)
+  )
+
+# Print or visualize the results as needed
+print(metropolitan_favorite_win_stats)
+
+cat("Number of times in a row the favorite won in metropolitan races:", metropolitan_favorite_win_stats$max_consecutive_wins, "\n")
+cat("Average times in a row that the favorite won in metropolitan races:", metropolitan_favorite_win_stats$average_consecutive_wins, "\n")
+
+
+```
+
+#### 33.	For Country races how many times in a row did the favourite fail to win and what was the average fails in a row.
+```{r,echo=FALSE}
+# Sort the data by meeting_region, meeting_date, and race_start_time
+horse_race_data_sorted <- sorted_races %>%
+  na.omit() %>%
+  filter(meeting_region == "C") 
+
+
+# Identify consecutive failures for each meeting_region group
+horse_race_data_sorted <- horse_race_data_sorted %>%
+  group_by(meeting_region) %>%
+  mutate(
+    consecutive_failures = with(rle( run_result_position_finish != 1), rep(lengths * values, lengths))
+  )
+
+# Calculate the number of times in a row the favorite failed to win and average fails in a row
+country_favorite_fail_stats <- horse_race_data_sorted %>%
+  summarise(
+    max_consecutive_failures = max(consecutive_failures),
+    average_consecutive_failures = mean(consecutive_failures)
+  )
+
+# Print the results
+cat("Number of times in a row the favorite failed to win in Country races:", country_favorite_fail_stats$max_consecutive_failures, "\n")
+cat("Average fails in a row for the favorite in Country races:", country_favorite_fail_stats$average_consecutive_failures, "\n")
+
+
+
+```
+
+#######
+### 34.	For Provincial races how many times in a row did the favourite fail to win and what was the average fails in a row.  
+######
+```{r,echo=FALSE}
+
+# Sort the data by meeting_region, meeting_date, and race_start_time
+horse_race_data_sorted <-sorted_races %>%
+  na.omit() %>%
+  filter(meeting_region == "P")
+
+
+# Identify consecutive failures for each meeting_region group
+horse_race_data_sorted <- horse_race_data_sorted %>%
+  group_by(meeting_region) %>%
+  mutate(
+    consecutive_failures = with(rle(run_result_position_finish != 1), rep(lengths * values, lengths))
+  )
+
+# Calculate the number of times in a row the favorite failed to win and average fails in a row
+provincial_favorite_fail_stats <- horse_race_data_sorted %>%
+  summarise(
+    max_consecutive_failures = max(consecutive_failures),
+    average_consecutive_failures = mean(consecutive_failures)
+  )
+
+# Print the results
+cat("Number of times in a row the favorite failed to win in Provincial races:", provincial_favorite_fail_stats$max_consecutive_failures, "\n")
+cat("Average fails in a row for the favorite in Provincial races:", provincial_favorite_fail_stats$average_consecutive_failures, "\n")
+
+
+```
+
+
+
+######
+### 35.	For Metropolitan races how many times in a row did the favourite fail to win and what was the average fails in a row.  
+#####
+
+```{r,echo=FALSE}
+# Sort the data by meeting_region, meeting_date, and race_start_time
+horse_race_data_sorted <- sorted_races %>%
+  na.omit() %>%
+  filter(meeting_region == "M") 
+
+
+# Identify consecutive failures for each meeting_region group
+horse_race_data_sorted <- horse_race_data_sorted %>%
+  group_by(meeting_region) %>%
+  mutate(
+    consecutive_failures = with(rle(run_result_position_finish != 1), rep(lengths * values, lengths))
+  )
+
+# Calculate the number of times in a row the favorite failed to win and average fails in a row
+metropolitan_favorite_fail_stats <- horse_race_data_sorted %>%
+  summarise(
+    max_consecutive_failures = max(consecutive_failures),
+    average_consecutive_failures = mean(consecutive_failures)
+  )
+
+# Print the results
+cat("Number of times in a row the favorite failed to win in Metropolitan races:", metropolitan_favorite_fail_stats$max_consecutive_failures, "\n")
+cat("Average fails in a row for the favorite in Metropolitan races:", metropolitan_favorite_fail_stats$average_consecutive_failures, "\n")
+
+
+
+```
+
+####
+### 36.	For Country races how many times in a row did the favourite place and what was the average times in a row that the favourite placed and paid a dividend.
+
+
+```{r,echo=FALSE}
+# Sort the data by meeting_region, meeting_date, and race_start_time
+horse_race_data_sorted <- sorted_races %>%
+  na.omit() %>%
+  filter(meeting_region == "C") %>%
+  arrange(meeting_region, meeting_date, race_start_time)
+
+# Identify consecutive placements for each meeting_region group
+horse_race_data_sorted <- horse_race_data_sorted %>%
+  group_by(meeting_region) %>%
+  mutate(
+    consecutive_placements = with(rle(run_result_position_finish %in% c(1,2, 3) & !is.na(tab_nsw_plc_final)), rep(lengths * values, lengths))
+  )
+
+country_favorite_place_stats <- horse_race_data_sorted %>%
+  summarise(
+    max_consecutive_placements = max(consecutive_placements),
+    average_consecutive_placements = mean(consecutive_placements)
+  )
+
+# Print the results
+cat("Number of times in a row the favorite placed in Country races:", country_favorite_place_stats$max_consecutive_placements, "\n")
+cat("Average times in a row the favorite placed and paid a dividend in Country races:", country_favorite_place_stats$average_consecutive_placements, "\n")
+
+```
+
+####
+### 37.	For Provincial races how many times in a row did the favourite place and what was the average times in a row that the favourite placed and paid a dividend.
+####
+
+```{r,echo=FALSE}
+
+
+
+# Sort the data by meeting_region, meeting_date, and race_start_time
+horse_race_data_sorted <- sorted_races %>%
+  na.omit() %>%
+  filter(meeting_region == "P") %>%
+  arrange(meeting_region, meeting_date, race_start_time)
+
+# Identify consecutive placements for each meeting_region group
+horse_race_data_sorted <- horse_race_data_sorted %>%
+  group_by(meeting_region) %>%
+  mutate(
+    consecutive_placements = with(rle( run_result_position_finish %in% c(1,2, 3) & !is.na(tab_nsw_plc_final)), rep(lengths * values, lengths))
+  )
+
+# Calculate the number of times in a row the favorite placed and average times in a row with dividends
+provincial_favorite_place_stats <- horse_race_data_sorted %>%
+  summarise(
+    max_consecutive_placements = max(consecutive_placements),
+    average_consecutive_placements = mean(consecutive_placements)
+  )
+
+# Print the results
+cat("Number of times in a row the favorite placed in Provincial races:", provincial_favorite_place_stats$max_consecutive_placements, "\n")
+cat("Average times in a row the favorite placed and paid a dividend in Provincial races:", provincial_favorite_place_stats$average_consecutive_placements, "\n")
+
+
+```
+
+####
+### 38.	For Metropolitan races how many times in a row did the favourite place and what was the average times in a row that the favourite placed and paid a dividend.  
+#
+```{r,echo=FALSE}
+
+
+# Sort the data by meeting_region, meeting_date, and race_start_time
+horse_race_data_sorted <- sorted_races %>%
+  na.omit() %>%
+  filter(meeting_region == "P") %>%
+  arrange(meeting_region, meeting_date, race_start_time)
+
+# Identify consecutive placements for each meeting_region group
+horse_race_data_sorted <- horse_race_data_sorted %>%
+  group_by(meeting_region) %>%
+  mutate(
+    consecutive_placements = with(rle(run_result_favourite == "true" & run_result_position_finish %in% c(1,2, 3) & !is.na(tab_nsw_plc_final)), rep(lengths * values, lengths))
+  )
+
+# Calculate the number of times in a row the favorite placed and average times in a row with dividends
+metropolitan_favorite_place_stats <- horse_race_data_sorted %>%
+  summarise(
+    max_consecutive_placements = max(consecutive_placements),
+    average_consecutive_placements = mean(consecutive_placements)
+  )
+
+# Print the results
+cat("Number of times in a row the favorite placed in Metropolitan races:", metropolitan_favorite_place_stats$max_consecutive_placements, "\n")
+cat("Average times in a row the favorite placed and paid a dividend in Metropolitan races:", metropolitan_favorite_place_stats$average_consecutive_placements, "\n")
+
+
+
+```
+
+#####
+
+### 39.	For Country races how many times in a row did the favourite fail to place and what was the average fails in a row.
+```{r,echo=FALSE}
+
+# Sort the data by meeting_region, meeting_date, and race_start_time
+horse_race_data_sorted <- sorted_races %>%
+  na.omit() %>%
+  filter(meeting_region == "C") %>%
+  arrange(meeting_region, meeting_date, race_start_time)
+
+# Identify consecutive failures to place for each meeting_region group
+horse_race_data_sorted <- horse_race_data_sorted %>%
+  group_by(meeting_region) %>%
+  mutate(
+    consecutive_failures_to_place = with(rle((run_result_position_finish > 3 | is.na(run_result_position_finish))), rep(lengths * values, lengths))
+  )
+
+# Calculate the number of times in a row the favorite failed to place and average fails in a row
+country_favorite_fail_place_stats <- horse_race_data_sorted %>%
+  summarise(
+    max_consecutive_failures_to_place = max(consecutive_failures_to_place),
+    average_consecutive_failures_to_place = mean(consecutive_failures_to_place)
+  )
+
+# Print the results
+cat("Number of times in a row the favorite failed to place in Country races:", country_favorite_fail_place_stats$max_consecutive_failures_to_place, "\n")
+cat("Average fails in a row the favorite failed to place in Country races:", country_favorite_fail_place_stats$average_consecutive_failures_to_place, "\n")
+
+
+
+```
+
+#########
+### 40.	For Provincial races how many times in a row did the favourite fail to place and what was the average fails in a row.  
+###########
+
+
+```{r,echo=FALSE}
+# Sort the data by meeting_region, meeting_date, and race_start_time
+horse_race_data_sorted <-sorted_races %>%
+  na.omit() %>%
+  filter(meeting_region == "P") 
+
+# Identify consecutive failures to place for each meeting_region group
+horse_race_data_sorted <- horse_race_data_sorted %>%
+  group_by(meeting_region) %>%
+  mutate(
+    consecutive_failures_to_place = with(rle((run_result_position_finish > 3 | is.na(run_result_position_finish))), rep(lengths * values, lengths))
+  )
+
+# Calculate the number of times in a row the favorite failed to place and average fails in a row
+provincial_favorite_fail_place_stats <- horse_race_data_sorted %>%
+  summarise(
+    max_consecutive_failures_to_place = max(consecutive_failures_to_place),
+    average_consecutive_failures_to_place = mean(consecutive_failures_to_place)
+  )
+
+# Print the results
+cat("Number of times in a row the favorite failed to place in Provincial races:", provincial_favorite_fail_place_stats$max_consecutive_failures_to_place, "\n")
+cat("Average fails in a row the favorite failed to place in Provincial races:", provincial_favorite_fail_place_stats$average_consecutive_failures_to_place, "\n")
+
+
+
+```
+
+### 41.	For Metropolitan races how many times in a row did the favourite fail to place and what was the average fails in a row.  
+```{r,echo=FALSE}
+
+# Sort the data by meeting_region, meeting_date, and race_start_time
+horse_race_data_sorted <- sorted_races %>%
+  na.omit() %>%
+  filter(meeting_region == "M")
+
+# Identify consecutive failures to place for each meeting_region group
+horse_race_data_sorted <- horse_race_data_sorted %>%
+  group_by(meeting_region) %>%
+  mutate(
+    consecutive_failures_to_place = with(rle((run_result_position_finish > 3 | is.na(run_result_position_finish))), rep(lengths * values, lengths))
+  )
+
+# Calculate the number of times in a row the favorite failed to place and average fails in a row
+metropolitan_favorite_fail_place_stats <- horse_race_data_sorted %>%
+  summarise(
+    max_consecutive_failures_to_place = max(consecutive_failures_to_place),
+    average_consecutive_failures_to_place = mean(consecutive_failures_to_place)
+  )
+
+# Print the results
+cat("Number of times in a row the favorite failed to place in Metropolitan races:", metropolitan_favorite_fail_place_stats$max_consecutive_failures_to_place, "\n")
+cat("Average fails in a row the favorite failed to place in Metropolitan races:", metropolitan_favorite_fail_place_stats$average_consecutive_failures_to_place, "\n")
+
+
+
+```
+
+
+
+############
+### 42.	In respect of the above Wins, Places and Fails was there any commonalities between: “race_distance”, “condition_age”, “condition_class”, “race_result_going” for the highest number or biggest averages of wins, places and fails. 
+######
+
+```{r,echo=FALSE}
+# Assuming you have a dataset named horse_race_data_cleaned
+
+# Calculate the total number of wins, places, and fails for each combination of factors
+commonalities_data <- sorted_races %>% na.omit(horse_race_data_cleaned21)%>%
+  group_by(race_distance, condition_age, condition_class, race_result_going, run_result_favourite) %>%
+  summarise(
+    total_count = n()
+  ) %>%
+  pivot_wider(
+    names_from = run_result_favourite,
+    values_from = total_count,
+    values_fill = 0
+  )
+
+# Calculate the average wins, places, and fails for each combination of factors
+average_data <- sorted_races %>%
+  group_by(race_distance, condition_age, condition_class, race_result_going) %>%
+  summarise(
+    average_wins = mean(run_result_favourite == "true"),
+    average_places = mean(run_result_favourite == "true" & run_result_position_finish %in% c(1,2, 3)),
+    average_fails = mean(run_result_favourite == "false" | (run_result_favourite == "true" & run_result_position_finish > 3))
+  )
+
+# Print the results or further analyze the data as needed
+head(commonalities_data)
+head(average_data)
+
+
+```
+
+
+#
+########
+### 43.	For “track_code” we also want to look at the chronological of events per day and know per track per day how many
+#times the favourite won, placed or failed to place in a row was. This could be put into a table, so that it shows track code, 
+#day and then 0,1,2,3,4,5,6,7,8,9,10 for the number of races in a day and then 0 would be if the favourite won every race as it 
+#went 0 without winning, 1 would be if it went 1 race without winning etc. And then the same for track code per
+#day for placing and failing to place.  
+# Filter for relevant columns
+```{r,echo=FALSE}
+suppressWarnings({
+  track_code_data <- sorted_races %>% na.omit(sorted_races)%>%
+  dplyr::select(track_code_3, meeting_date, run_result_favourite)
+
+# Group by track code and day
+grouped_data <- track_code_data %>%
+  group_by(track_code_3, meeting_date) %>%
+  arrange(meeting_date) %>%
+  mutate(won_in_row = cumsum(run_result_favourite)) %>%
+  group_by(track_code_3, meeting_date, won_in_row) %>%
+  summarise(races_in_row = n())
+
+# Pivot the table to get counts for each number of races in a row
+pivoted_data <- grouped_data %>%
+  pivot_wider(names_from = won_in_row, values_from = races_in_row, names_prefix = "won_in_row_") %>%
+  replace(is.na(.), 0)
+
+# Print the results
+#(pivoted_data)
+})
+
+```
+
+
+
+### 44.	If every race for “track_code” was in one line of events (that is every day put into one group for that track code), how often did the favourite win, place or fail to place in a row.
+```{r,echo=FALSE}
+# Assuming you have a dataset named horse_race_data_cleaned
+
+attach=attach(horse_race_data_sorted )
+# Sort the data by track_code, meeting_date, and race_start_time
+horse_race_data_sorted <- horse_race_data_cleaned21 %>% na.omit(horse_race_data_cleaned21) %>%
+  arrange(track_code_3, meeting_date, race_start_time)
+
+# Identify consecutive wins, places, and fails for each track_code group
+horse_race_data_sorted <- horse_race_data_sorted %>%
+  group_by(track_code_3) %>%
+  mutate(
+    consecutive_wins = with(rle((run_result_position_finish == 1 )), rep(lengths * values, lengths)))
+    consecutive_places= with(rle(run_result_position_finish %in% c(1,2, 3)), rep(lengths * values, lengths))
+    consecutive_fails = with(rle((run_result_position_finish > 3 )), rep(lengths * values, lengths))
+                             
+  #  with(rle(run_result_favourite == "true" & run_result_position_finish %in% c(2, 3) & !is.na(tab_nsw_plc_final)), rep(lengths * values, lengths))
+                             
+
+# Calculate the total counts for consecutive wins, places, and fails
+consecutive_counts <- horse_race_data_sorted %>%
+  group_by(track_code_3) %>%
+  summarise(
+    total_consecutive_wins = max(consecutive_wins),
+    total_consecutive_places = max(consecutive_places),
+    total_consecutive_fails = max(consecutive_fails))
+  
+
+print(consecutive_counts)
+
+```
+
+
+
+###########
+### 45.	If every race for a metropolitan, country and provincial for each day was put into a line of events ie each day for metropolitan and ordered by the time of the race or race id, #how many times did the favourite win, place or fail to place in a row?
+########
+```{r,echo=FALSE}
+
+
+# Sort the data by meeting_region, meeting_date, race_start_time, and race_id
+horse_race_data_sorted <- sorted_races %>%
+  arrange(meeting_region, meeting_date, race_start_time)
+
+# Identify consecutive wins, places, and fails for each meeting_region, day, and race
+horse_race_data_sorted <- horse_race_data_sorted %>%
+  group_by(meeting_region, meeting_date) %>%
+  mutate(
+    consecutive_wins = with(rle((run_result_position_finish == 1)), rep(lengths * values, lengths)))
+    consecutive_places= with(rle(run_result_position_finish %in% c(1,2, 3)), rep(lengths * values, lengths))
+    consecutive_fails = with(rle((run_result_position_finish >3)), rep(lengths * values, lengths))
+  
+
+# Calculate the total counts for consecutive wins, places, and fails
+consecutive_counts <- horse_race_data_sorted %>%
+  group_by(meeting_region, meeting_date) %>%
+  summarise(
+    total_consecutive_wins = max(consecutive_wins),
+    total_consecutive_places = max(consecutive_places),
+    total_consecutive_fails = max(consecutive_fails)
+  )
+
+# Print or further analyze the results as needed
+head(consecutive_counts)
+
+
+```
+
+
+### 46.	A table for the prices paid when the favourite won or placed and paid a dividend for Metropolitan, Country or Provincial races,
+#the percentage of times it won or placed based on the price. SO for instance if the favourite was paying a ““tab_nsw_win_final” of 
+#$1-$2, $2.01 to $3, $3.01 to $4, $4.01 to $5 or over $5 what was the percentage of it winning for each price and then the same again for the 
+#favourite placing “tab_nsw_plc_final”, but as place dividends pay less, it would be $1.00 to $1.10, $1.11 to $1.20,$1.21 to $1.30 
+#all the way up to over $2. For a place price. 
+
+
+```{r,echo=FALSE}
+# Assuming you have a dataset named horse_race_data_cleaned
+
+# Filter data for Metropolitan, Country, or Provincial races
+sorted_races <- horse_race_data_cleaned21 %>%
+  filter(meeting_region %in% c("M", "C", "P"))
+
+# Function to categorize win and place prices
+categorize_price <- function(price) {
+  case_when(
+    price <= 2 ~ "1-$2",
+    price <= 3 ~ "2.01-$3",
+    price <= 4 ~ "3.01-$4",
+    price <= 5 ~ "4.01-$5",
+    TRUE ~ "Over $5"
+  )
+}
+# Categorize win and place prices
+sorted_races <- horse_race_data_cleaned21 %>%
+  mutate(
+    win_price_category = categorize_price(tab_nsw_win_final),
+    place_price_category = categorize_price(tab_nsw_plc_final)
+  )
+
+# Create a table for win prices
+win_price_table <- sorted_races %>%
+  group_by(win_price_category) %>%
+  summarise(
+    win_count = sum(run_result_position_finish == 1),
+    total_count = n()
+  ) %>%
+  mutate(win_percentage = (win_count / total_count) * 100)
+
+# Create a table for place prices
+place_price_table <- sorted_races %>%
+  group_by(place_price_category) %>%
+  summarise( total_count = n(),
+    place_count = sum(run_result_position_finish %in% c(1,2, 3)),
+   
+  ) %>%
+  mutate(place_percentage = (place_count / total_count) * 100)
+
+# Print or visualize the tables as needed
+print(win_price_table)
+print(place_price_table)
+
+
+```
+
+
+
+ 
